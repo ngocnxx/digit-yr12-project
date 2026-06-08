@@ -7,6 +7,28 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+   <!-- ============ Screen: Sign in/sign up ============ -->
+    <section id="screen-auth" class="screen">
+    <div class="auth-bg">
+      <div class="auth-card">
+        <div class="brand"><span class="brand-mark">N</span> NCEA Review Navigator</div>
+        <p class="subtitle">Your daily organisned revision scheduler</p>
+
+        <!-- These two buttons just swap which form is showing -->
+        <div class="auth-tabs">
+          <button class="active" data-action="auth-tab" data-mode="login">Sign In</button>
+          <button data-action="auth-tab" data-mode="signup">Create Account</button>
+        </div>
+
+        <!-- Login form -->
+        <div id="auth-login" class="auth-form">
+          <div class="field"><label>Email</label>
+            <input class="input" id="login-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+          <div class="field"><label>Password</label>
+            <input class="input" id="login-pw" type="password" placeholder="Your password" autocomplete="current-password"></div>
+          <p class="error-msg hidden" id="login-err"></p>
+          <button class="btn btn-primary btn-block btn-lg" data-action="do-login">Sign In</button>
+        </div>
   <div id="web"></div>
   <div id="modal-overlay" class="modal-overlay"></div>
   <script src="script.js"></script>
