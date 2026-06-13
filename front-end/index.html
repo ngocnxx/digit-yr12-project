@@ -4,33 +4,162 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCEA Review Navigator</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-   <!-- ============ Screen: Sign in/sign up ============ -->
-    <section id="screen-auth" class="screen">
+
+  <!-- Topbar: hidden until logged in — route() calls show/hide on this -->
+  <div id="topbar" class="hidden">
+    <button data-action="nav-dashboard" id="nav-dashboard">Dashboard</button>
+    <button data-action="nav-settings" id="nav-settings">Settings</button>
+    <button data-action="do-logout">Log out</button>
+  </div>
+
+  <!-- ============ Screen: Auth (login / signup) ============ -->
+  <section id="screen-auth" class="screen hidden">
     <div class="auth-bg">
       <div class="auth-card">
-        <div class="brand"><span class="brand-mark">N</span> NCEA Review Navigator</div>
-        <p class="subtitle">Your daily organisned revision scheduler</p>
 
-        <!-- These two buttons just swap which form is showing -->
+        <div class="brand">
+          <span class="brand-mark">N</span>
+          NCEA Review Navigator
+        </div>
+        <p class="subtitle">Your daily revision scheduler</p>
+
+        <!-- Tab switcher -->
         <div class="auth-tabs">
-          <button class="active" data-action="auth-tab" data-mode="login">Sign In</button>
+          <button data-action="auth-tab" data-mode="login">Log In</button>
           <button data-action="auth-tab" data-mode="signup">Create Account</button>
         </div>
 
         <!-- Login form -->
         <div id="auth-login" class="auth-form">
-          <div class="field"><label>Email</label>
-            <input class="input" id="login-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
-          <div class="field"><label>Password</label>
-            <input class="input" id="login-pw" type="password" placeholder="Your password" autocomplete="current-password"></div>
+          <div class="field">
+            <label>Email</label>
+            <input class="input" id="login-email" type="email" placeholder="you@email.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input class="input" id="login-pw" type="password" placeholder="Your password" autocomplete="current-password">
+          </div>
           <p class="error-msg hidden" id="login-err"></p>
           <button class="btn btn-primary btn-block btn-lg" data-action="do-login">Sign In</button>
         </div>
-  <div id="web"></div>
+
+        <!-- Signup form — hidden until tab switches -->
+        <div id="auth-signup" class="auth-form hidden">
+          <div class="field">
+            <label>Full name</label>
+            <input class="input" id="signup-name" placeholder="e.g. Aroha Smith" autocomplete="name">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input class="input" id="signup-email" type="email" placeholder="you@email.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Year level</label>
+            <select class="input select-input" id="signup-year">
+              <option value="12" selected>Year 12 (NCEA Level 2)</option>
+              <option value="13">Year 13 (NCEA Level 3)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input class="input" id="signup-pw" type="password" placeholder="At least 4 characters" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label>Confirm password</label>
+            <input class="input" id="signup-pw2" type="password" placeholder="Re-enter password" autocomplete="new-password">
+          </div>
+          <p class="error-msg hidden" id="signup-err"></p>
+          <button class="btn btn-primary btn-block btn-lg" data-action="do-signup">Create Account</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Screen: Onboarding ============ -->
+  <section id="screen-onboarding" class="screen hidden">
+    <div class="ob-bg">
+      <div class="ob-card">
+
+        <!-- Progress dots -->
+        <div id="ob-dots" class="ob-dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+
+        <!-- Step 1: Welcome -->
+        <div id="ob-step-1" class="ob-step">
+          <div class="ob-icon">👋</div>
+          <h2>Welcome to NCEA Review Navigator</h2>
+          <p class="ob-desc">This app uses spaced repetition to help you revise smarter — it schedules each topic at exactly the right time so it sticks in long-term memory.</p>
+          <p class="ob-desc">Let's set up your first subject to get started.</p>
+          <div class="ob-actions">
+            <button class="btn btn-primary btn-lg" data-action="ob-next">Get started →</button>
+            <button class="btn btn-ghost" data-action="ob-skip">Skip setup</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Pick a subject -->
+        <div id="ob-step-2" class="ob-step hidden">
+          <div class="ob-icon">📚</div>
+          <h2>Add your first subject</h2>
+          <p class="ob-desc">Pick one of the common NCEA subjects below, or type your own.</p>
+          <div class="field">
+            <label>Subject</label>
+            <select class="input select-input" id="ob-subj-select">
+              <option value="">— Choose a subject —</option>
+              <option value="English" data-emoji="✏️" data-colour="#3B82F6">English</option>
+              <option value="Mathematics" data-emoji="📐" data-colour="#8B5CF6">Mathematics</option>
+              <option value="Biology" data-emoji="🧬" data-colour="#10B981">Biology</option>
+              <option value="Chemistry" data-emoji="⚗️" data-colour="#F59E0B">Chemistry</option>
+              <option value="Physics" data-emoji="⚡" data-colour="#EF4444">Physics</option>
+              <option value="History" data-emoji="🏛️" data-colour="#6B7280">History</option>
+              <option value="Geography" data-emoji="🌍" data-colour="#059669">Geography</option>
+              <option value="Economics" data-emoji="📊" data-colour="#2563EB">Economics</option>
+              <option value="__custom__" data-emoji="📘">Other (type your own)</option>
+            </select>
+          </div>
+          <div id="ob-custom-field" class="field hidden">
+            <label>Subject name</label>
+            <input class="input" id="ob-custom" placeholder="e.g. Digital Technology">
+          </div>
+          <div class="ob-actions">
+            <button class="btn btn-primary btn-lg" data-action="ob-add-subject">Add subject →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Add topics -->
+        <div id="ob-step-3" class="ob-step hidden">
+          <div class="ob-icon">🌱</div>
+          <h2>Add topics for <span id="ob-subject-name">your subject</span></h2>
+          <p class="ob-desc">Topics are the specific things you revise — standards, chapters, concepts. Add as many as you like now, or skip and add them later.</p>
+          <div class="field ob-topic-row">
+            <input class="input" id="ob-topic-input" placeholder="e.g. Photosynthesis, Organic compounds…">
+            <button class="btn btn-primary" data-action="ob-add-topic">Add</button>
+          </div>
+          <div id="ob-topic-chips" class="topic-chips"></div>
+          <div class="ob-actions">
+            <button class="btn btn-primary btn-lg" data-action="ob-finish">Finish setup →</button>
+            <button class="btn btn-ghost" data-action="ob-skip">Skip for now</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Placeholder screens — router needs them to exist, filled in later -->
+  <section id="screen-dashboard" class="screen hidden"></section>
+  <section id="screen-subject"   class="screen hidden"></section>
+  <section id="screen-settings"  class="screen hidden"></section>
+
   <div id="modal-overlay" class="modal-overlay"></div>
+  <div id="toast" class="toast"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
