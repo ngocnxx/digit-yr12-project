@@ -44,17 +44,17 @@ Three tiers on a single host. No build tools, no third-party services, no CDN de
 
 ```mermaid
 flowchart TB
-    subgraph C["1 · Client — browser single-page app (vanilla HTML/CSS/JS, hash router)"]
+    subgraph C["1 · Client : browser single-page app (vanilla HTML/CSS/JS, hash router)"]
         direction LR
         A1[Auth & onboarding] --- A2[Dashboard / priorities] --- A3[Subject detail] --- A4[Settings]
     end
-    subgraph S["2 · Application — Flask (Python), API-only"]
+    subgraph S["2 · Application : Flask (Python), API-only"]
         direction LR
         B1[REST API /api/*] --- B2[Auth: hash + JWT] --- B3[Validation & errors]
         B4["Scheduling engine — Carpenter 1·3·7·14d, daily-cap priorities, coverage"]
         B5["Assessment mode — pause spacing, auto-log on end"]
     end
-    subgraph D["3 · Data — SQLite (single file, on-server)"]
+    subgraph D["3 · Data : SQLite (single file, on-server)"] + Excel for fast-track implementation
         direction LR
         E1[(users)] --- E2[(subjects)] --- E3[(topics)] --- E4[(reviews)]
     end
@@ -87,7 +87,6 @@ around it.
 ```
 .
 ├── README.md                ← this file (human-facing source of truth)
-├── .gitignore
 ├── .env.example             ← copy to back-end/.env and fill in
 ├── README/                  ← specification docs + mockups
 │   ├── NCEA-Review-Navigator-Specification.docx
