@@ -4,14 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCEA Review Navigator</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/screens.css">
 </head>
 <body>
 
-  <!-- Topbar: hidden until logged in — route() calls show/hide on this -->
+  <!-- Topbar: hidden until logged in — route() shows/hides it. -->
   <div id="topbar" class="hidden">
-    <button data-action="nav-dashboard" id="nav-dashboard">Dashboard</button>
-    <button data-action="nav-settings" id="nav-settings">Settings</button>
+    <span class="brand">NCEA Review Navigator</span>
+    <button data-action="nav-dashboard">Dashboard</button>
     <button data-action="do-logout">Log out</button>
   </div>
 
@@ -28,51 +31,51 @@
 
         <!-- Tab switcher -->
         <div class="auth-tabs">
-          <button data-action="auth-tab" data-mode="login">Log In</button>
-          <button data-action="auth-tab" data-mode="signup">Create Account</button>
+          <button data-action="auth-tab" data-mode="login">Log in</button>
+          <button data-action="auth-tab" data-mode="signup">Create account</button>
         </div>
 
         <!-- Login form -->
         <div id="auth-login" class="auth-form">
           <div class="field">
-            <label>Email</label>
+            <label for="login-email">Email</label>
             <input class="input" id="login-email" type="email" placeholder="you@email.com" autocomplete="email">
           </div>
           <div class="field">
-            <label>Password</label>
+            <label for="login-pw">Password</label>
             <input class="input" id="login-pw" type="password" placeholder="Your password" autocomplete="current-password">
           </div>
           <p class="error-msg hidden" id="login-err"></p>
-          <button class="btn btn-primary btn-block btn-lg" data-action="do-login">Sign In</button>
+          <button class="btn btn-primary btn-block btn-lg" data-action="do-login">Sign in</button>
         </div>
 
-        <!-- Signup form — hidden until tab switches -->
+        <!-- Signup form — hidden until the tab switches -->
         <div id="auth-signup" class="auth-form hidden">
           <div class="field">
-            <label>Full name</label>
+            <label for="signup-name">Full name</label>
             <input class="input" id="signup-name" placeholder="e.g. Aroha Smith" autocomplete="name">
           </div>
           <div class="field">
-            <label>Email</label>
+            <label for="signup-email">Email</label>
             <input class="input" id="signup-email" type="email" placeholder="you@email.com" autocomplete="email">
           </div>
           <div class="field">
-            <label>Year level</label>
+            <label for="signup-year">Year level</label>
             <select class="input select-input" id="signup-year">
               <option value="12" selected>Year 12 (NCEA Level 2)</option>
               <option value="13">Year 13 (NCEA Level 3)</option>
             </select>
           </div>
           <div class="field">
-            <label>Password</label>
+            <label for="signup-pw">Password</label>
             <input class="input" id="signup-pw" type="password" placeholder="At least 4 characters" autocomplete="new-password">
           </div>
           <div class="field">
-            <label>Confirm password</label>
+            <label for="signup-pw2">Confirm password</label>
             <input class="input" id="signup-pw2" type="password" placeholder="Re-enter password" autocomplete="new-password">
           </div>
           <p class="error-msg hidden" id="signup-err"></p>
-          <button class="btn btn-primary btn-block btn-lg" data-action="do-signup">Create Account</button>
+          <button class="btn btn-primary btn-block btn-lg" data-action="do-signup">Create account</button>
         </div>
 
       </div>
@@ -109,7 +112,7 @@
           <h2>Add your first subject</h2>
           <p class="ob-desc">Pick one of the common NCEA subjects below, or type your own.</p>
           <div class="field">
-            <label>Subject</label>
+            <label for="ob-subj-select">Subject</label>
             <select class="input select-input" id="ob-subj-select">
               <option value="">— Choose a subject —</option>
               <option value="English" data-emoji="✏️" data-colour="#3B82F6">English</option>
@@ -124,7 +127,7 @@
             </select>
           </div>
           <div id="ob-custom-field" class="field hidden">
-            <label>Subject name</label>
+            <label for="ob-custom">Subject name</label>
             <input class="input" id="ob-custom" placeholder="e.g. Digital Technology">
           </div>
           <div class="ob-actions">
@@ -152,7 +155,7 @@
     </div>
   </section>
 
-  <!-- Placeholder screens — router needs them to exist, filled in later -->
+  <!-- Screens filled in by JS. Dashboard is the F1 placeholder; the others are slice-2 stubs. -->
   <section id="screen-dashboard" class="screen hidden"></section>
   <section id="screen-subject"   class="screen hidden"></section>
   <section id="screen-settings"  class="screen hidden"></section>
@@ -160,6 +163,6 @@
   <div id="modal-overlay" class="modal-overlay"></div>
   <div id="toast" class="toast"></div>
 
-  <script src="script.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

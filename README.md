@@ -44,21 +44,21 @@ Three tiers on a single host. No build tools, no third-party services, no CDN de
 
 ```mermaid
 flowchart TB
-    subgraph C["1 · Client : browser single-page app (vanilla HTML/CSS/JS, hash router)"]
+    subgraph C["1 · Web Frontend : browser single-page app (vanilla HTML/CSS/JS, hash router)"]
         direction LR
         A1[Auth & onboarding] --- A2[Dashboard / priorities] --- A3[Subject detail] --- A4[Settings]
     end
-    subgraph S["2 · Application : Flask (Python), API-only"]
+    subgraph S["2 · API Backend : Flask (Python), API-only"]
         direction LR
         B1[REST API /api/*] --- B2[Auth: hash + JWT] --- B3[Validation & errors]
         B4["Scheduling engine — Carpenter 1·3·7·14d, daily-cap priorities, coverage"]
         B5["Assessment mode — pause spacing, auto-log on end"]
     end
-    subgraph D["3 · Data : SQLite (single file, on-server)"] + Excel for fast-track implementation
+    subgraph D["3 · Database : SQLite (single file, on-server)"]
         direction LR
         E1[(users)] --- E2[(subjects)] --- E3[(topics)] --- E4[(reviews)]
     end
-    C -->|"HTTPS · JSON over fetch · Bearer JWT"| S
+    C -->|"HTTPS · JSON over fetch · Bearer JWT (split origin + CORS)"| S
     S -->|"sqlite3 · parametrised SQL · archive-not-delete"| D
 ```
 
@@ -87,53 +87,87 @@ around it.
 ```
 .
 ├── README.md                ← this file (human-facing source of truth)
+├── CLAUDE.md                ← operating guide for Claude/agents
 ├── .env.example             ← copy to back-end/.env and fill in
+├── docker-compose.yml       ← local stack: web (nginx) + api (Flask)
+├── .devcontainer/           ← VS Code devcontainer (uses docker-compose)
+├── .github/workflows/ci.yml ← ruff (lint+format) + pytest on push
 ├── README/                  ← specification docs + mockups
 │   ├── NCEA-Review-Navigator-Specification.docx
 │   ├── Project-Choices-Overview.docx
 │   └── Mockups/
-├── back-end/                ← Flask JSON API (Python)
-│   ├── app.py               ← app factory, CORS, blueprint registration
+├── back-end/                ← Flask JSON API (Python 3.13)
+│   ├── app.py               ← app factory, CORS, blueprint registration, error handlers
 │   ├── requirements.txt
+│   ├── pyproject.toml       ← ruff (lint + format) + pytest config
+│   ├── Dockerfile           ← python:3.13-slim + gunicorn
 │   ├── db.py                ← sqlite3 connection helper + init_db()
-│   ├── schema.sql           ← table definitions
-│   ├── auth.py              ← signup/login/me/logout, hashing, JWT, @require_auth
-│   ├── scheduling.py        ← PURE-Python spacing engine (no Flask/DB imports)
-│   ├── routes/              ← subjects, topics, reviews, priorities, settings, assessment
-│   └── tests/               ← test_scheduling.py, test_api.py (pytest)
-└── front-end/               ← static SPA, served separately / by any static server
-    ├── index.html
-    ├── subject-detail.html
-    ├── setting.html
-    ├── styles.css
-    └── script.js
+│   ├── schema.sql           ← table definitions (users → subjects → topics → reviews)
+│   ├── auth.py              ← hashing, JWT encode/decode, @require_auth
+│   ├── errors.py            ← ApiError + validation helpers
+│   ├── scheduling.py        ← PURE-Python spacing engine (no Flask/DB imports; slice 2)
+│   ├── routes/              ← auth, user, subjects, topics (slice 2 adds the rest)
+│   └── tests/               ← conftest.py, test_api.py (pytest)
+└── front-end/               ← static SPA (separate origin), nginx in Docker
+    ├── index.html           ← markup only (no inline JS/CSS)
+    ├── Dockerfile           ← nginx:alpine
+    ├── nginx.conf
+    ├── css/                 ← tokens · base · components · screens
+    └── js/                  ← ES modules: config, api, dom, state, router, main + screens/
 ```
 
-> Current state: the front-end SPA (auth + onboarding) is built; the back-end is being implemented against
-> the contract below. See the *Roadmap*.
+> Current state: feature **F1 (auth → onboarding → subjects/topics)** works end-to-end. The scheduling
+> engine + priorities dashboard are slice 2. See the *Roadmap*.
 
 ---
 
-## Run locally
+## Run with Docker (recommended)
 
-> Prerequisites: Python 3.11+.
+> Prerequisites: Docker + Docker Compose.
 
 ```bash
-# 1. Back-end (API on http://127.0.0.1:5000)
+docker compose up --build
+```
+
+This starts two services on separate origins (CORS bridges them): the static SPA on
+**http://127.0.0.1:5500** (nginx) and the JSON API on **http://127.0.0.1:5050** (Flask + gunicorn). The
+SQLite file lives on a named volume. Open `http://127.0.0.1:5500` and sign up.
+
+> The API's host port is **5050**, not 5000, because macOS AirPlay Receiver occupies 5000 (it would make
+> `docker compose up` and the devcontainer fail to bind). The container still listens on 5000 internally;
+> override with `API_PORT` in a root `.env` if you prefer.
+
+The same setup backs the **VS Code devcontainer** (`.devcontainer/`): "Reopen in Container" installs
+dependencies and initialises the database automatically.
+
+## Run locally (without Docker)
+
+> Prerequisites: Python 3.13.
+
+```bash
+# 1. Back-end (API on http://127.0.0.1:5050)
 cd back-end
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp ../.env.example .env          # then edit .env (see Configuration)
 python -c "import db; db.init_db()"   # create the SQLite file from schema.sql
-flask --app app run --debug
+flask --app app run --debug --port 5050   # 5050 avoids the macOS AirPlay :5000 clash
 
 # 2. Front-end (static, e.g. on http://127.0.0.1:5500) — in a second terminal
 cd front-end
 python3 -m http.server 5500
 ```
 
-Open `http://127.0.0.1:5500`. The SPA reads its API base URL and stores the JWT in `localStorage`
-(`ncea_token`).
+Open `http://127.0.0.1:5500`. The SPA's API base URL defaults to `http://127.0.0.1:5050` (override via
+`window.NRN_API_BASE` in `front-end/js/config.js`) and it stores the JWT in `localStorage` (`ncea_token`).
+
+## Quality checks
+
+```bash
+cd back-end && source .venv/bin/activate
+ruff check . && ruff format --check .   # lint + format
+pytest                                  # API tests (auth, onboarding, subjects/topics)
+```
 
 ## Configuration
 
@@ -181,8 +215,9 @@ broken comparable projects).
 
 ## Roadmap
 
-1. **Foundation** — these docs, schema, config, project scaffold. ← current
-2. **Slice 1** — auth → onboarding → add subject/topic, working end-to-end against the real backend.
+1. **Foundation** — docs, schema, config, Docker-first scaffold (compose + devcontainer + CI). ✅
+2. **Slice 1 / F1** — auth → onboarding → add subject/topic, end-to-end against the real backend, with a
+   placeholder dashboard reading the data back. ✅ ← current
 3. **Slice 2** — the spaced-repetition engine (`scheduling.py`) with full unit tests, then `GET /api/priorities`
    and `POST /api/log-review`, then hydrate the dashboard and subject-detail screens.
 4. **Remaining spec features** — Assessment Mode UI, settings screen, review history, study tips, catch-up

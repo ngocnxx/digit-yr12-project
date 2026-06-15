@@ -1,0 +1,59 @@
+/* Base — reset, document defaults, typography, shared utilities. */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--slate-800);
+  background: var(--slate-50);
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: var(--blue-600);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+input, select, textarea { font: inherit; }
+
+h1, h2, h3, h4 {
+  margin: 0 0 8px;
+  color: var(--slate-900);
+  font-weight: 700;
+  line-height: 1.25;
+}
+h1 { font-size: 28px; }
+h2 { font-size: 22px; }
+h3 { font-size: 18px; }
+h4 { font-size: 15px; }
+p  { margin: 0 0 12px; }
+
+/* Utilities */
+.hidden { display: none !important; }
+.muted  { color: var(--slate-400); }
+.small  { font-size: 13px; }
+
+/* Responsive — tighten card padding and buttons on small screens. */
+@media (max-width: 540px) {
+  body { font-size: 15px; }
+  .auth-card, .ob-card { padding: 28px 20px; }
+  .btn-lg { padding: 12px 22px; font-size: 15px; }
+  .dashboard { padding: 20px 16px; }
+}

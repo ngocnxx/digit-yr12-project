@@ -1,0 +1,20 @@
+{
+  "name": "NCEA Review Navigator",
+  // Image-based dev environment (Python 3.13). The repo is auto-mounted at
+  // /workspaces/<repo>. The full app stack still runs via `task up` /
+  // `docker compose up` — this container is just a consistent dev shell.
+  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff"],
+      "settings": {
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        }
+      }
+    }
+  },
+  "postCreateCommand": "pip install -r back-end/requirements.txt && python -c \"import sys; sys.path.insert(0, 'back-end'); import db; db.init_db('back-end/navigator.db')\"",
+  "forwardPorts": [5050, 5500]
+}

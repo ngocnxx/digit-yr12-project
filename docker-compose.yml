@@ -1,0 +1,34 @@
+# NCEA Review Navigator — local stack (split origin: web + api).
+#   docker compose up --build
+#   web -> http://127.0.0.1:5500   api -> http://127.0.0.1:5050
+#
+# Values default to dev-safe settings; override any of them in a root .env file.
+#
+# Why the API host port is 5050, not 5000: on macOS, AirPlay Receiver
+# (ControlCenter) permanently occupies port 5000, which made `docker compose up`
+# and the VS Code devcontainer fail with "address already in use". The container
+# still listens on 5000 internally; only the published host port moved. Override
+# either side via a root .env, e.g. `echo "API_PORT=5000" >> .env` (then point
+# front-end/js/config.js API_BASE at the matching port).
+
+services:
+  api:
+    build: ./back-end
+    ports:
+      - "${API_PORT:-5050}:5000"
+    environment:
+      SECRET_KEY: "${SECRET_KEY:-dev-insecure-change-me}"
+      DATABASE_PATH: "/app/data/navigator.db"
+      CORS_ORIGIN: "${CORS_ORIGIN:-http://127.0.0.1:5500}"
+    volumes:
+      - db_data:/app/data
+
+  web:
+    build: ./front-end
+    ports:
+      - "${WEB_PORT:-5500}:80"
+    depends_on:
+      - api
+
+volumes:
+  db_data:

@@ -1,0 +1,14 @@
+# NCEA Review Navigator — back-end dependencies (Python 3.13)
+# Pinned to latest-major 2026 releases; no backwards-compat shims.
+
+# --- runtime ---
+Flask>=3.1,<4
+Werkzeug>=3.1,<4
+PyJWT>=2.10,<3
+Flask-Cors>=5,<6
+python-dotenv>=1,<2
+gunicorn>=23,<24
+
+# --- dev / test ---
+pytest>=8,<9
+ruff>=0.8

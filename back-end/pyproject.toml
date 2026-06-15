@@ -1,0 +1,21 @@
+# Tooling config for the back-end. One tool for lint + format: ruff.
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# A small, beginner-friendly rule set: pyflakes (F), pycodestyle (E/W),
+# isort (I), pyupgrade (UP), flake8-bugbear (B).
+select = ["E", "W", "F", "I", "UP", "B"]
+# UP017 would rewrite datetime.timezone.utc -> datetime.UTC (3.11+ only). We keep
+# the cross-version form so the suite also runs on older interpreters.
+ignore = ["UP017"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # long inline JSON payloads in tests are fine
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

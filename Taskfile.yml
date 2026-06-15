@@ -1,0 +1,90 @@
+# NCEA Review Navigator — task runner (https://taskfile.dev)
+# Install: brew install go-task   (or: go install github.com/go-task/task/v3/cmd/task@latest)
+# Run `task` with no args to list everything.
+#
+# Three levels (front-end only · front-end+back-end · end-to-end) in two modes
+# (bare-metal / Docker). See docs/dev-and-test.md.
+#
+# Override ports inline, e.g.  task api API_PORT=5055
+version: "3"
+
+vars:
+  API_PORT: '{{.API_PORT | default "5050"}}'
+  WEB_PORT: '{{.WEB_PORT | default "5500"}}'
+  API_BASE: '{{.API_BASE | default (printf "http://127.0.0.1:%s" (.API_PORT | default "5050"))}}'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds: [task --list]
+    silent: true
+
+  # ── Front-end only (level 1, no backend) ───────────────────────────────
+  fe:
+    desc: "Front-end only — serve the standalone prototype (mock by default, no backend/DB)"
+    cmds:
+      - 'echo "Open http://127.0.0.1:{{.WEB_PORT}}/  (mock backend — no Flask/DB needed)"'
+      - WEB_PORT={{.WEB_PORT}} scripts/run-web.sh
+
+  web:
+    desc: "Serve the static SPA (add ?real=1 in the URL to hit the Flask API)"
+    cmd: WEB_PORT={{.WEB_PORT}} scripts/run-web.sh
+
+  prototype:
+    desc: "Build front-end/prototype/ — standalone 3-file mockup (index.html + styles.css + app.js)"
+    cmd: python3 scripts/build-prototype.py
+
+  # ── Back-end / full stack (levels 2-3) ─────────────────────────────────
+  install:
+    desc: Create the back-end venv and install deps
+    cmds:
+      - cd back-end && python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt
+
+  init-db:
+    desc: Create the SQLite database from schema.sql
+    cmd: cd back-end && .venv/bin/python -c "import db; db.init_db()"
+
+  api:
+    desc: Run the Flask API (levels 2/3)
+    cmd: API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} scripts/run-api.sh
+
+  # ── Tests / quality ────────────────────────────────────────────────────
+  test:
+    desc: Back-end tests (pytest)
+    cmd: cd back-end && .venv/bin/pytest
+
+  lint:
+    desc: Lint (ruff check)
+    cmd: cd back-end && .venv/bin/ruff check .
+
+  fmt:
+    desc: Format (ruff format)
+    cmd: cd back-end && .venv/bin/ruff format .
+
+  smoke:
+    desc: End-to-end API smoke over HTTP against a running API
+    cmd: API_BASE={{.API_BASE}} scripts/smoke.sh
+
+  # ── Docker ─────────────────────────────────────────────────────────────
+  up:
+    desc: "Build + run the full stack (web + api)"
+    cmd: docker compose up --build
+
+  down:
+    desc: Stop the stack and remove containers
+    cmd: docker compose down
+
+  logs:
+    desc: Tail container logs
+    cmd: docker compose logs -f
+
+  ps:
+    desc: Show running compose services
+    cmd: docker compose ps
+
+  clean:
+    desc: Remove venv, caches, and local dev databases
+    cmds:
+      - rm -rf back-end/.venv back-end/.pytest_cache back-end/.ruff_cache
+      - find . -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
+      - find . -name '*.db' -not -path '*/.git/*' -delete 2>/dev/null || true
