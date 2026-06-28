@@ -130,7 +130,7 @@ Same shape as login, with **three client-side guards before the network call**:
 
 ```mermaid
 flowchart TD
-    S([doSignup] (auth.js)) --> V1{name + email<br/>+ password present?}
+    S([doSignup] auth.js) --> V1{name + email<br/>+ password present?}
     V1 -- no --> E1[#signup-err:<br/>fill required fields]
     V1 -- yes --> V2{password ===<br/>confirm?}
     V2 -- no --> E2[#signup-err:<br/>passwords don't match]
