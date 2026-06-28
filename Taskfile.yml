@@ -8,13 +8,15 @@
 #
 # ── Getting started (local, macOS — start here) ───────────────────────────
 #   task setup       # one-time: venv + backend deps + create the database
-#   task web:dev     # frontend mockup in the browser (mock backend — no Flask/DB)
+#   task dev         # ⭐ front-end dev in the browser (local, mock — no Flask/DB)
+#   task test        # ⭐ local quality gate: lint + tests
 #   task api:dev     # backend API (separate terminal), only when you need it
-#   task api:check   # local quality gate: lint + tests
-# ── Scale later ───────────────────────────────────────────────────────────
+# ── Same thing in Docker (parity, for scaling/deployment) ──────────────────
 #   task docker:up   # run the whole stack (web + api + db) in containers
+#   task docker:test # run the backend tests inside the container
 #
-# Tasks are isolated by tier:
+# DEFAULT IS LOCAL. The short `dev`/`test` always mean your Mac; `docker:*` is
+# the mirrored container path. Tasks are isolated by tier:
 #   web:*  FRONTEND  ·  api:*  BACKEND  ·  db:*  DATABASE  ·  docker:*  FULL STACK
 # Override ports inline, e.g.  task api:dev API_PORT=5055
 version: "3"
@@ -32,6 +34,17 @@ tasks:
     desc: "List all tasks"
     cmds: [task --list]
     silent: true
+
+  # ── Local-first shortcuts (default = your Mac) ─────────────────────────
+  dev:
+    desc: "⭐ Local front-end dev on this Mac (mock backend — no Flask/DB). → http://127.0.0.1:5500"
+    cmds:
+      - task: web:dev
+
+  test:
+    desc: "⭐ Local quality gate — lint + backend tests (the everyday `test`)"
+    cmds:
+      - task: api:check
 
   setup:
     desc: "LOCAL one-time bootstrap — venv + backend deps + create the database"

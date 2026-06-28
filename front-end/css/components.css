@@ -52,6 +52,8 @@
   color: var(--slate-700);
   margin-bottom: 6px;
 }
+/* Text/select inputs. 16px font-size is deliberate: it stops iOS Safari from
+   auto-zooming the page when the field is focused. */
 .input, .select-input {
   width: 100%;
   padding: 10px 14px;
@@ -67,6 +69,8 @@
   border-color: var(--blue-400);
   box-shadow: var(--focus);
 }
+/* Inline error banner (e.g. #login-err). Starts `.hidden`; auth.js fills its text
+   and toggles `.hidden` to show client- or server-side validation messages. */
 .error-msg {
   font-size: 13px;
   color: var(--red-600);

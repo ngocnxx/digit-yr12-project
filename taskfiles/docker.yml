@@ -29,3 +29,7 @@ tasks:
   ps:
     desc: "Show running services"
     cmd: cd {{.ROOT_DIR}} && docker compose ps
+
+  test:
+    desc: "Run the backend tests inside the container (parity with `task test`)"
+    cmd: cd {{.ROOT_DIR}} && docker compose run --rm api pytest

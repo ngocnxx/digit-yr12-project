@@ -44,9 +44,18 @@
     <button data-action="do-logout">Log out</button>
   </div>
 
-  <!-- ============ Screen: Auth (login / signup) ============ -->
+  <!-- ===================================================================
+       SCREEN: Auth — login + create-account (the logged-out default).
+       Shown by router.js when there is no token; hidden otherwise.
+       Behaviour is attached via data-action hooks only (no inline JS):
+         auth-tab  → switch login/signup tab   (screens/auth.js setAuthMode)
+         do-login  → submit the login form      (screens/auth.js doLogin)
+         do-signup → submit the signup form      (screens/auth.js doSignup)
+       #auth-login is visible by default; #auth-signup starts .hidden and is
+       revealed by the "Create account" tab. Design: docs/design/auth-screen.md
+       =================================================================== -->
   <section id="screen-auth" class="screen hidden">
-    <div class="auth-bg">
+    <div class="auth-bg">             <!-- full-height gradient backdrop, centers the card -->
       <div class="auth-card">
 
         <div class="brand">

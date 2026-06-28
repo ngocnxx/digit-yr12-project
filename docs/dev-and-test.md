@@ -32,20 +32,25 @@ fast, isolated checks at the bottom; fewer, slower, full-stack checks at the top
 Task runner: [Taskfile.yml](../Taskfile.yml) (install: `brew install go-task`). Run `task` to list all.
 Tasks are **namespaced by tier** — `web:*` frontend, `api:*` backend, `db:*` database, `docker:*` full stack.
 
-**Start small (local, this Mac) — Docker is the scale-up path for later, not needed for dev:**
+**Default is LOCAL (this Mac). The short `dev`/`test` mean your Mac; `docker:*` is the mirrored
+container path for scaling/deployment.**
 
 ```bash
-task setup           # one-time LOCAL bootstrap: venv + deps + database
-task web:dev         # frontend mockup in the browser (mock backend — no Flask/DB)
-task api:dev         # backend API (separate terminal), only when you need it
-task api:check       # local quality gate: lint + tests (before committing)
+task setup     # one-time LOCAL bootstrap: venv + deps + database
+task dev       # ⭐ front-end dev in the browser (local, mock — no Flask/DB) → :5500
+task test      # ⭐ local quality gate: lint + backend tests
+task api:dev   # backend API (separate terminal), only when you need the real API
+
+# Same thing in Docker (parity):
+task docker:up    # run the whole stack (web + api + db) in containers
+task docker:test  # run the backend tests inside the container
 ```
 
 ```bash
 # web (frontend)
 task web:dev         # serve the SPA → :5500 (mock by default; ?real=1 to use the API)
 task web:prototype   # build the standalone 3-file mockup (README/prototype/)
-task web:open        # build + open that prototype in your browser
+task web:open        # serve the SPA AND open it in your browser (live dev server)
 
 # api (backend)
 task api:install     # venv + deps

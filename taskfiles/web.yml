@@ -17,6 +17,10 @@ tasks:
     cmd: python3 {{.ROOT_DIR}}/scripts/build-prototype.py
 
   open:
-    desc: "Build + open the standalone prototype in your browser (no server, no backend)"
-    deps: [prototype]
-    cmd: open {{.ROOT_DIR}}/README/prototype/index.html
+    desc: "Serve the SPA AND open it in your browser (live dev server; Ctrl+C to stop)"
+    # web:dev is a long-running server, so it can't be a dependency (it never
+    # "finishes"). Instead: background a short wait → open the tab, and run the
+    # server in the foreground (the npm-start feel).
+    cmd: |
+      ( sleep 1 && open "http://127.0.0.1:{{.WEB_PORT}}/" ) &
+      WEB_PORT={{.WEB_PORT}} {{.ROOT_DIR}}/scripts/run-web.sh
