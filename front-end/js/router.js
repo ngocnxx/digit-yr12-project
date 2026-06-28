@@ -29,6 +29,9 @@ export function navigate(hash) {
 }
 
 export async function route() {
+  // Dev trace — shows in DevTools → Console on every route() call. Safe (non-blocking).
+  console.log('[route] running', { hash: location.hash || '#', hasToken: !!getToken() });
+
   // No token → not logged in → show auth.
   if (!getToken()) {
     state.currentUser = null;

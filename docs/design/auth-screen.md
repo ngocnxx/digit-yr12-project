@@ -31,8 +31,8 @@
 
 ```mermaid
 flowchart TD
-    A([route runs]) --> B{token in<br/>localStorage?}
-    B -- no --> C[show #screen-auth<br/>hydrateAuth]
+    A([router.js runs]) --> B{token in<br/>localStorage?}
+    B -- no --> C[show #screen-auth<br/>(auth.js) hydrateAuth]
     B -- yes --> D{currentUser<br/>in memory?}
     D -- no --> E[GET /api/auth/me]
     E -- 200 --> F{onboarding_done?}
@@ -89,7 +89,7 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor U as Student
-    participant H as #screen-auth (DOM)
+    participant H as screen-auth (DOM)
     participant M as main.js (delegation)
     participant A as auth.js
     participant API as api.js
@@ -130,7 +130,7 @@ Same shape as login, with **three client-side guards before the network call**:
 
 ```mermaid
 flowchart TD
-    S([doSignup]) --> V1{name + email<br/>+ password present?}
+    S([doSignup] (auth.js)) --> V1{name + email<br/>+ password present?}
     V1 -- no --> E1[#signup-err:<br/>fill required fields]
     V1 -- yes --> V2{password ===<br/>confirm?}
     V2 -- no --> E2[#signup-err:<br/>passwords don't match]
