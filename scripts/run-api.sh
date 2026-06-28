@@ -6,8 +6,10 @@ cd "$(dirname "$0")/../back-end"
 
 API_PORT="${API_PORT:-5050}"
 WEB_PORT="${WEB_PORT:-5500}"
+# Project targets Python 3.13; override with PYTHON=... if yours is named otherwise.
+PYTHON="${PYTHON:-python3.13}"
 
-[ -d .venv ] || python3 -m venv .venv
+[ -d .venv ] || "$PYTHON" -m venv .venv
 # shellcheck disable=SC1091
 source .venv/bin/activate
 pip install -q -r requirements.txt

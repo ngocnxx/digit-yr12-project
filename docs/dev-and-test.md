@@ -15,32 +15,53 @@ fast, isolated checks at the bottom; fewer, slower, full-stack checks at the top
 
 | Level | What runs | What it catches | Primary tools |
 |---|---|---|---|
-| **1 · front-end only** | static SPA + in-browser mock | markup/CSS/router, the whole UI journey, validation, graceful API-down handling | browser (MCP preview), `task fe` |
+| **1 · front-end only** | static SPA + in-browser mock | markup/CSS/router, the whole UI journey, validation, graceful API-down handling | browser (MCP preview), `task web:dev` |
 | **1 · back-end only** | Flask test client + temp SQLite | route logic, auth, validation, scoping, status codes | `pytest`, `ruff` |
-| **2 · front-end + back-end** | SPA + Flask + sqlite, separate origins | the JSON contract + CORS, real fetch round-trips | `task smoke` (curl), browser |
+| **2 · front-end + back-end** | SPA + Flask + sqlite, separate origins | the JSON contract + CORS, real fetch round-trips | `task api:smoke` (curl), browser |
 | **3 · end-to-end** | browser drives SPA → API → DB | the whole user journey (signup → onboarding → dashboard), persistence, logout | browser MCP (preview / Chrome / computer-use) |
 
 > **Ports (macOS):** the API's host port is **5050**, not 5000 — macOS *AirPlay Receiver*
 > (ControlCenter) permanently binds `:5000`. The container still listens on 5000 internally;
 > only the published host port differs. Override anything with `API_PORT` / `WEB_PORT`
-> (e.g. `task api API_PORT=5055`), and keep `front-end/js/config.js` `API_BASE` in sync.
+> (e.g. `task api:dev API_PORT=5055`), and keep `front-end/js/config.js` `API_BASE` in sync.
 
 ---
 
 ## Quick reference (`task`)
 
 Task runner: [Taskfile.yml](../Taskfile.yml) (install: `brew install go-task`). Run `task` to list all.
+Tasks are **namespaced by tier** — `web:*` frontend, `api:*` backend, `db:*` database, `docker:*` full stack.
+
+**Start small (local, this Mac) — Docker is the scale-up path for later, not needed for dev:**
 
 ```bash
-task            # list all tasks
-task fe         # front-end ONLY — standalone prototype, mock by default (no backend)  → :5500
-task install    # back-end venv + deps
-task test       # pytest            (level 1 back-end)
-task lint       # ruff check
-task web        # serve SPA         (real-API mode)                       → :5500
-task api        # run Flask API     (levels 2/3)                          → :5050
-task smoke      # HTTP smoke test   (level 2/3) against a running API
-task up         # docker compose up (full stack)
+task setup           # one-time LOCAL bootstrap: venv + deps + database
+task web:dev         # frontend mockup in the browser (mock backend — no Flask/DB)
+task api:dev         # backend API (separate terminal), only when you need it
+task api:check       # local quality gate: lint + tests (before committing)
+```
+
+```bash
+# web (frontend)
+task web:dev         # serve the SPA → :5500 (mock by default; ?real=1 to use the API)
+task web:prototype   # build the standalone 3-file mockup (README/prototype/)
+task web:open        # build + open that prototype in your browser
+
+# api (backend)
+task api:install     # venv + deps
+task api:dev         # run the Flask API → :5050
+task api:test        # pytest
+task api:lint        # ruff check
+task api:check       # lint + tests (local gate)
+task api:smoke       # HTTP smoke test against a running API
+
+# db (database)
+task db:init         # create the SQLite DB from schema.sql
+task db:reset        # wipe + recreate
+task db:shell        # open a sqlite3 shell
+
+# docker (scale-up: the whole stack in containers — optional for dev)
+task docker:up       # docker compose up --build
 ```
 
 ---
@@ -64,28 +85,28 @@ deploy injects `window.NRN_API_BASE` (a real URL), which automatically selects t
 The `api()` calls are the seam, so nothing else changes.
 
 > **Serving note:** the SPA uses native ES modules, which browsers only load over `http(s)` — so it
-> must be *served* (e.g. `task fe`, one command), not opened as a `file://` double-click.
+> must be *served* (e.g. `task web:dev`, one command), not opened as a `file://` double-click.
 
-### Standalone 3-file prototype (`front-end/prototype/`)
+### Standalone 3-file prototype (`README/prototype/`)
 
 For mockup/prototype review with **only HTML/CSS/JS** — no server, no Python, no backend, and no
 backend/DB code in sight — generate a portable 3-file package (HTML, CSS, JS kept isolated):
 
 ```bash
-task prototype                       # → front-end/prototype/{index.html, styles.css, app.js}
-open front-end/prototype/index.html  # or just double-click it in Finder
+task web:prototype                   # → README/prototype/{index.html, styles.css, app.js}
+open README/prototype/index.html  # or just double-click it in Finder
 ```
 
 `scripts/build-prototype.py` concatenates the four `css/*.css` into one `styles.css`, and flattens the
 ES modules into one **classic** `app.js` (no `import`/`export`, mock backend bundled in and on by
 default). A classic `<script src="app.js">` is what lets the page open straight from the filesystem
 (`file://`) — ES modules are blocked there. It's a **generated artifact**: edit the real source under
-`front-end/js` + `front-end/css`, then re-run `task prototype`; never hand-edit `prototype/`.
+`front-end/js` + `front-end/css`, then re-run `task web:prototype`; never hand-edit `prototype/`.
 
 | Entry | Opens via | Backend | Use |
 |---|---|---|---|
-| `front-end/index.html`          | served (`task fe`) — ES modules need http(s) | mock (default) / `?real=1` | dev loop |
-| `front-end/prototype/index.html`| **double-click** (`file://`), 3 isolated files | mock (built in) | hand to reviewers — no backend/DB |
+| `front-end/index.html`          | served (`task web:dev`) — ES modules need http(s) | mock (default) / `?real=1` | dev loop |
+| `README/prototype/index.html`| **double-click** (`file://`), 3 isolated files | mock (built in) | hand to reviewers — no backend/DB |
 
 > *(An earlier `index.dev.html` was a throwaway verification harness — now deleted. Pointing the SPA
 > at a different real API origin is done with `window.NRN_API_BASE`, not a second HTML file.)*
@@ -97,7 +118,7 @@ Pure UI loop for HTML/CSS/JS work — **no Flask, no DB**. The mock backend serv
 journey (signup → onboarding → dashboard) so you can build and test the UI in isolation.
 
 ```bash
-task fe                       # serve the SPA → :5500
+task web:dev                       # serve the SPA → :5500
 # open http://127.0.0.1:5500/   → full app on the in-browser mock backend (default)
 ```
 
@@ -109,17 +130,17 @@ to switch to the real backend later, with no code change.
 No browser, no network. Flask's test client + a throwaway SQLite file (`tmp_path`).
 
 ```bash
-task test                     # pytest: auth, onboarding, subjects/topics, 400/401 paths
-task lint                     # ruff check
+task api:test                     # pytest: auth, onboarding, subjects/topics, 400/401 paths
+task api:lint                     # ruff check
 ```
 
 ### Level 2 — front-end + back-end (contract + CORS)
 Two terminals (separate origins, CORS bridges them):
 
 ```bash
-task api                      # terminal 1 → http://127.0.0.1:5050
-task web                      # terminal 2 → http://127.0.0.1:5500
-task smoke                    # terminal 3 → drives the F1 flow over HTTP, asserts codes
+task api:dev                      # terminal 1 → http://127.0.0.1:5050
+task web:dev                      # terminal 2 → http://127.0.0.1:5500
+task api:smoke                    # terminal 3 → drives the F1 flow over HTTP, asserts codes
 ```
 
 ### Level 3 — end-to-end
@@ -134,10 +155,10 @@ the live Flask API instead of the mock) and walk the journey, or drive it with a
 One command brings up both services (web = nginx, api = Flask + gunicorn, SQLite on a volume):
 
 ```bash
-task up                       # docker compose up --build
+task docker:up                       # docker compose up --build
 # web → http://127.0.0.1:5500   api → http://127.0.0.1:5050
-task smoke                    # level 2/3 smoke against the running stack
-task down                     # stop + remove
+task api:smoke                    # level 2/3 smoke against the running stack
+task docker:down                     # stop + remove
 ```
 
 - **Level 1 (front-end only) in Docker:** `docker compose up --build web`, then open
@@ -145,7 +166,7 @@ task down                     # stop + remove
 - **Level 1 (back-end only) in Docker:** `docker compose run --rm api pytest`.
 - **Devcontainer:** "Reopen in Container" uses an image-based Python 3.13 environment (decoupled
   from the runtime stack); `postCreateCommand` installs deps and initialises the DB. Inside it,
-  use `task fe` / `task api`; run the full container stack from the host with `task up`.
+  use `task web:dev` / `task api:dev`; run the full container stack from the host with `task docker:up`.
 
 ---
 

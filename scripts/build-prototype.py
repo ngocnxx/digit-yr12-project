@@ -9,9 +9,10 @@ HTML, CSS, and JS stay in SEPARATE files (the project's isolation rule), but:
 A classic <script src="app.js"> (not type="module") is what lets it open straight
 from the filesystem (file://) — ES modules are blocked over file://.
 
-Output: front-end/prototype/{index.html, styles.css, app.js}. It is a generated
-artifact — edit the real source under front-end/js + front-end/css, then re-run
-`task prototype`. No npm, no bundler — a plain-text transform.
+Output: README/prototype/{index.html, styles.css, app.js} — a frozen reference
+snapshot beside the spec docs + Mockups. It is a generated artifact: edit the real
+source under front-end/js + front-end/css, then re-run `task web:prototype`. No npm,
+no bundler — a plain-text transform.
 """
 
 from __future__ import annotations
@@ -21,7 +22,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FE = ROOT / "front-end"
-OUT_DIR = FE / "prototype"
+# Output lives under README/ as a frozen reference snapshot, alongside the spec
+# docs + Mockups — front-end/ stays the live, incremental source.
+OUT_DIR = ROOT / "README" / "prototype"
 
 CSS_FILES = ["css/tokens.css", "css/base.css", "css/components.css", "css/screens.css"]
 

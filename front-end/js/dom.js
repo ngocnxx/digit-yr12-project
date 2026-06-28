@@ -1,7 +1,7 @@
 // DOM helpers — selectors, show/hide, HTML escaping, toast, and modal plumbing.
 
-export const $ = (sel, root = document) => root.querySelector(sel);
-export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+export const $ = (sel, root = document) => root.querySelector(sel); //sel (selector= what you're hunting for), searches the root = document ; $= grab 1 specific item
+export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));//$$ grab every matching item on the screen; array  from packs the messy node list (of all the items) into clean js array(list)
 
 export function show(el) {
   if (el) el.classList.remove('hidden');

@@ -3,6 +3,7 @@
 (function () {
 'use strict';
 /* ── js/config.js ── */
+// ✅
 // Configuration & constants.
 //
 // Split-origin setup: the API runs on a different origin to this static SPA,
@@ -12,7 +13,8 @@
 // Host port 5050 (not 5000): macOS AirPlay Receiver occupies 5000, so the API's
 // published host port is 5050 (see docker-compose.yml). Keep this in sync with it.
 
-const API_BASE = window.NRN_API_BASE || 'http://127.0.0.1:5050';
+//established 
+const API_BASE = window.NRN_API_BASE || 'http://127.0.0.1:5050'; //door number that the flask is running. || = or, can define  window.NRN_API_BASE for the actual web
 
 // Backend selection. The SPA defaults to an in-browser MOCK backend so it runs
 // standalone for prototype/mockup review — only HTML/CSS/JS, no Flask, no DB.
@@ -20,24 +22,24 @@ const API_BASE = window.NRN_API_BASE || 'http://127.0.0.1:5050';
 // window.NRN_API_BASE) or you pass ?real=1. The mock mirrors the real API
 // contract, so nothing else changes. See js/api.mock.js + docs/dev-and-test.md.
 //   (default)  → mock        ?real=1 → real API        ?mock=1 → force mock
-const _params = new URLSearchParams(window.location.search);
+const _params = new URLSearchParams(window.location.search)//look at messy text start at ? mark; URLSearchParams= built in tool to turn messy string to easy to use checklist
 const USE_MOCK = _params.has('mock')
-  ? true
-  : _params.has('real')
+  ? /* is teh condition to the left true*/ true // Rule 1: Is '?mock' in the URL? If yes, USE_MOCK = true.No then move below // ? or : used for assign a single value immediately 
+  :  /* otherwise*/_params.has('real') // Rule 2: If not, is '?real' in the URL? If yes, USE_MOCK = false!
     ? false
-    : typeof window.NRN_USE_MOCK === 'boolean'
+    : typeof window.NRN_USE_MOCK === 'boolean' // Otherwise, did the developer explicitly set a true/false setting in the window settings (NRN_USE_MOCK)?
       ? window.NRN_USE_MOCK
       : !window.NRN_API_BASE; // no real API configured → mock
 
-const TOKEN_KEY = 'ncea_token';
+const TOKEN_KEY = 'ncea_token'; //label written on the storage locker-> use label key to open the box
 
 const DEFAULT_TOPIC_EMOJI = '📚';
 
 /* ── js/dom.js ── */
 // DOM helpers — selectors, show/hide, HTML escaping, toast, and modal plumbing.
 
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const $ = (sel, root = document) => root.querySelector(sel); //sel (selector= what you're hunting for), searches the root = document ; $= grab 1 specific item
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));//$$ grab every matching item on the screen; array  from packs the messy node list (of all the items) into clean js array(list)
 
 function show(el) {
   if (el) el.classList.remove('hidden');
@@ -105,11 +107,11 @@ async function withPending(btn, pendingText, fn) {
 // Central app state. A single mutable object so modules share one source of
 // truth (ES module exports are live bindings — mutate properties, don't reassign).
 
-const state = {
+const state = { //run only once the site first loads up
   currentUser: null, // { id, name, email, yearLevel, onboarding_done }
   authMode: 'login', // 'login' | 'signup'
   onboarding: {
-    step: 1, // 1 | 2 | 3
+    step: 1, // 1 | 2 | 3 (which card/step user is on)
     createdSubject: null, // { id, name, emoji, colour }
     addedTopics: [], // string[]
   },
@@ -714,18 +716,23 @@ async function route() {
 }
 
 /* ── js/main.js ── */
+// ✅
 // Composition root — imports every screen handler, wires one delegated click
 // listener + keyboard shortcuts, and starts the router. This is the only script
 // the HTML loads (`<script type="module" src="js/main.js">`).
+//import all these things from these files so i can use them
 
+// Signal that the ES-module graph loaded and ran. The classic serve-guard in
+// index.html checks this flag; if it's never set (e.g. opened via file://, where
+// browsers block module imports) it shows a "serve me" help card instead of a
+// blank page.
+window.__NRN_BOOTED = true;
 
 // ── Global click delegation ──
-// One listener reads data-action from every click and dispatches it. `act` is
-// the clicked [data-action] element; handlers that hit the network take it so
-// they can show a pending state on that button.
-document.body.addEventListener('click', async (e) => {
+//hey browser, stad guard at top page-> run this everytime users click on screen. (e)= event -> info package
+document.body.addEventListener('click', async (e) => { 
   // Let an open modal manage its own clicks first.
-  if (e.target.closest('#modal-overlay')) {
+  if (e.target.closest('#modal-overlay')) { //look inside the event packet and find htm elemnt user finger touched, look at elemnt and see its family tree to see if it live inside container with id="modal"
     if (e.target.closest('[data-action="modal-cancel"]')) closeModal();
     return;
   }

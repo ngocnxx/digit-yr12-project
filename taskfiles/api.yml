@@ -1,0 +1,43 @@
+# BACKEND tasks — the Flask JSON API (Python). Talks to the database.
+# Invoked as `task api:<name>` from the repo root.
+version: "3"
+
+vars:
+  API_PORT: '{{.API_PORT | default "5050"}}'
+  WEB_PORT: '{{.WEB_PORT | default "5500"}}'
+  API_BASE: '{{.API_BASE | default (printf "http://127.0.0.1:%s" (.API_PORT | default "5050"))}}'
+  VENV: "{{.ROOT_DIR}}/back-end/.venv/bin"
+  # The project targets Python 3.13. Override if your 3.13 is named differently:
+  #   task api:install PYTHON=python3.13
+  PYTHON: '{{.PYTHON | default "python3.13"}}'
+
+tasks:
+  install:
+    desc: "Create the Python venv ({{.PYTHON}}) and install backend dependencies"
+    cmd: cd {{.ROOT_DIR}}/back-end && {{.PYTHON}} -m venv .venv && .venv/bin/pip install -q --upgrade pip && .venv/bin/pip install -q -r requirements.txt
+
+  dev:
+    desc: "Run the backend — Flask API on :{{.API_PORT}} (needs the DB: see `task db:init`)"
+    cmd: API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} {{.ROOT_DIR}}/scripts/run-api.sh
+
+  test:
+    desc: "Test the backend (pytest)"
+    cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/pytest
+
+  lint:
+    desc: "Lint the backend (ruff check)"
+    cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/ruff check .
+
+  format:
+    desc: "Format the backend (ruff format)"
+    cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/ruff format .
+
+  smoke:
+    desc: "Smoke-test the running API over HTTP ({{.API_BASE}})"
+    cmd: API_BASE={{.API_BASE}} {{.ROOT_DIR}}/scripts/smoke.sh
+
+  check:
+    desc: "Local quality gate — lint + tests (run before committing)"
+    cmds:
+      - task: lint
+      - task: test

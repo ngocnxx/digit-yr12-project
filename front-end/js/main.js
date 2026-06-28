@@ -1,7 +1,8 @@
+// ✅
 // Composition root — imports every screen handler, wires one delegated click
 // listener + keyboard shortcuts, and starts the router. This is the only script
 // the HTML loads (`<script type="module" src="js/main.js">`).
-
+//import all these things from these files so i can use them
 import { api, clearToken } from './api.js';
 import { $, closeModal, toast } from './dom.js';
 import { state } from './state.js';
@@ -15,13 +16,17 @@ import {
   obSkip,
 } from './screens/onboarding.js';
 
+// Signal that the ES-module graph loaded and ran. The classic serve-guard in
+// index.html checks this flag; if it's never set (e.g. opened via file://, where
+// browsers block module imports) it shows a "serve me" help card instead of a
+// blank page.
+window.__NRN_BOOTED = true;
+
 // ── Global click delegation ──
-// One listener reads data-action from every click and dispatches it. `act` is
-// the clicked [data-action] element; handlers that hit the network take it so
-// they can show a pending state on that button.
-document.body.addEventListener('click', async (e) => {
+//hey browser, stad guard at top page-> run this everytime users click on screen. (e)= event -> info package
+document.body.addEventListener('click', async (e) => { 
   // Let an open modal manage its own clicks first.
-  if (e.target.closest('#modal-overlay')) {
+  if (e.target.closest('#modal-overlay')) { //look inside the event packet and find htm elemnt user finger touched, look at elemnt and see its family tree to see if it live inside container with id="modal"
     if (e.target.closest('[data-action="modal-cancel"]')) closeModal();
     return;
   }

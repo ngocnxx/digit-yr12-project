@@ -1,0 +1,22 @@
+# DATABASE tasks — the SQLite file (back-end/navigator.db).
+# Invoked as `task db:<name>` from the repo root.
+version: "3"
+
+vars:
+  VENV: "{{.ROOT_DIR}}/back-end/.venv/bin"
+  DB: "{{.ROOT_DIR}}/back-end/navigator.db"
+
+tasks:
+  init:
+    desc: "Create the SQLite database from schema.sql (safe to re-run)"
+    cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/python -c "import db; db.init_db()"
+
+  reset:
+    desc: "Wipe and recreate the database (deletes all local data)"
+    cmds:
+      - rm -f {{.DB}}
+      - cd {{.ROOT_DIR}}/back-end && {{.VENV}}/python -c "import db; db.init_db()"
+
+  shell:
+    desc: "Open an interactive sqlite3 shell on the database"
+    cmd: sqlite3 {{.DB}}

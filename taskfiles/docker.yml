@@ -1,0 +1,31 @@
+# DOCKER tasks — the full stack (frontend + backend + database) in containers.
+# SCALE-UP path: for day-to-day dev prefer local (task web:dev / api:dev). Use
+# these for parity, deployment, or scaling. Invoked as `task docker:<name>`.
+version: "3"
+
+vars:
+  API_PORT: '{{.API_PORT | default "5050"}}'
+  WEB_PORT: '{{.WEB_PORT | default "5500"}}'
+
+tasks:
+  up:
+    desc: "Run the FULL stack — web + api + db (build + run, web:{{.WEB_PORT}} api:{{.API_PORT}})"
+    cmd: cd {{.ROOT_DIR}} && API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} docker compose up --build
+
+  down:
+    desc: "Stop the stack and remove containers"
+    cmd: cd {{.ROOT_DIR}} && docker compose down
+
+  rebuild:
+    desc: "Rebuild images from scratch and restart the stack"
+    cmds:
+      - cd {{.ROOT_DIR}} && docker compose down
+      - cd {{.ROOT_DIR}} && API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} docker compose up --build
+
+  logs:
+    desc: "Tail container logs"
+    cmd: cd {{.ROOT_DIR}} && docker compose logs -f
+
+  ps:
+    desc: "Show running services"
+    cmd: cd {{.ROOT_DIR}} && docker compose ps

@@ -1,0 +1,22 @@
+# FRONTEND tasks — the browser SPA (HTML/CSS/JS). No Python, no DB.
+# Invoked as `task web:<name>` from the repo root.
+version: "3"
+
+vars:
+  WEB_PORT: '{{.WEB_PORT | default "5500"}}'
+
+tasks:
+  dev:
+    desc: "Run the frontend — serve the SPA (mock by default; add ?real=1 to use the API)"
+    cmds:
+      - 'echo "Open http://127.0.0.1:{{.WEB_PORT}}/   (mock backend — no Flask/DB needed)"'
+      - WEB_PORT={{.WEB_PORT}} {{.ROOT_DIR}}/scripts/run-web.sh
+
+  prototype:
+    desc: "Build the standalone 3-file mockup → README/prototype/ (index.html + styles.css + app.js)"
+    cmd: python3 {{.ROOT_DIR}}/scripts/build-prototype.py
+
+  open:
+    desc: "Build + open the standalone prototype in your browser (no server, no backend)"
+    deps: [prototype]
+    cmd: open {{.ROOT_DIR}}/README/prototype/index.html

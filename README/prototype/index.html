@@ -5,8 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCEA Review Navigator</title>
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Serve-guard: a CLASSIC (non-module) script so it runs even when the ES
+       module app can't load (e.g. opened via file://). If the app hasn't booted
+       shortly after load, reveal the #serve-hint help card instead of a blank page. -->
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        if (!window.__NRN_BOOTED) {
+          var hint = document.getElementById('serve-hint');
+          if (hint) hint.classList.remove('hidden');
+        }
+      }, 600);
+    });
+  </script>
 </head>
 <body>
+
+  <!-- Shown only if the module app never booted (see serve-guard above). -->
+  <div id="serve-hint" class="serve-hint hidden">
+    <div class="serve-hint-card">
+      <h2>This page needs to be served</h2>
+      <p>The app uses ES modules, which browsers only load over <code>http(s)</code> — not from a
+        double-clicked file.</p>
+      <p><strong>Run it:</strong> <code>task web:dev</code>, then open
+        <a href="http://127.0.0.1:5500/">http://127.0.0.1:5500/</a></p>
+      <p class="muted small">No-setup preview: open <code>README/prototype/index.html</code></p>
+    </div>
+  </div>
 
   <!-- Topbar: hidden until logged in — route() shows/hides it. -->
   <div id="topbar" class="hidden">
