@@ -31,15 +31,16 @@
 
 ```mermaid
 flowchart TD
-    A([router.js runs]) --> B{token in<br/>localStorage?}
-    B -- no --> C[show #screen-auth<br/>(auth.js) hydrateAuth]
-    B -- yes --> D{currentUser<br/>in memory?}
-    D -- no --> E[GET /api/auth/me]
-    E -- 200 --> F{onboarding_done?}
-    E -- 401/fail --> G[clearToken] --> A
+    A(["router.js runs"]) --> B{"token in localStorage?"}
+    B -- no --> C["show #screen-auth<br/>(auth.js hydrateAuth)"]
+    B -- yes --> D{"currentUser in memory?"}
+    D -- no --> E["GET /api/auth/me"]
+    E -- 200 --> F{"onboarding_done?"}
+    E -- "401 / fail" --> G["clearToken"]
+    G --> A
     D -- yes --> F
-    F -- no --> H[show #screen-onboarding]
-    F -- yes --> I[show #screen-dashboard]
+    F -- no --> H["show #screen-onboarding"]
+    F -- yes --> I["show #screen-dashboard"]
 
     classDef auth fill:#DBEAFE,stroke:#2563EB,color:#0F172A;
     classDef ok fill:#ECFDF5,stroke:#059669,color:#0F172A;
@@ -89,33 +90,33 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor U as Student
-    participant H as screen-auth (DOM)
-    participant M as main.js (delegation)
+    participant H as "screen-auth (DOM)"
+    participant M as "main.js (delegation)"
     participant A as auth.js
     participant API as api.js
-    participant BE as Backend (mock / Flask)
+    participant BE as "Backend (mock / Flask)"
     participant R as router.js
 
-    U->>H: Click "Sign in"
+    U->>H: Click 'Sign in'
     H-->>M: click bubbles to body listener
     M->>A: doLogin(button)
     A->>A: read + trim email / password
     alt Missing email or password
-        A->>H: show #login-err — stop
+        A->>H: show #login-err - stop
     else Valid input
-        A->>API: api('POST','/api/auth/login', {email, password})
-        Note over A,H: withPending → button disabled, label "Signing in…"
+        A->>API: api POST /api/auth/login
+        Note over A,H: withPending - button disabled, label 'Signing in…'
         API->>BE: POST /api/auth/login
         alt 200 OK
-            BE-->>API: { token, user }
+            BE-->>API: token + user
             API-->>A: data
             A->>API: setToken(token)
             Note over API: JWT saved in localStorage (ncea_token)
-            A->>R: navigate('#dashboard')
+            A->>R: navigate to #dashboard
             R->>H: showScreen(dashboard)
         else 401 / 400 / network
             BE-->>API: error (status + message)
-            API-->>A: throw Error(.status,.message)
+            API-->>A: throw Error
             A->>H: show friendly message in #login-err
         end
         Note over A,H: withPending restores the button either way
@@ -130,15 +131,15 @@ Same shape as login, with **three client-side guards before the network call**:
 
 ```mermaid
 flowchart TD
-    S([doSignup] auth.js) --> V1{name + email<br/>+ password present?}
-    V1 -- no --> E1[#signup-err:<br/>fill required fields]
-    V1 -- yes --> V2{password ===<br/>confirm?}
-    V2 -- no --> E2[#signup-err:<br/>passwords don't match]
-    V2 -- yes --> V3{password<br/>≥ 4 chars?}
-    V3 -- no --> E3[#signup-err:<br/>min 4 characters]
-    V3 -- yes --> P[POST /api/auth/signup<br/>withPending 'Creating account…']
-    P -- 201 --> OK[setToken → navigate '#dashboard']
-    P -- 400 dup email --> E4[#signup-err:<br/>account already exists]
+    S(["doSignup (auth.js)"]) --> V1{"name + email + password present?"}
+    V1 -- no --> E1["#signup-err: fill required fields"]
+    V1 -- yes --> V2{"password === confirm?"}
+    V2 -- no --> E2["#signup-err: passwords don't match"]
+    V2 -- yes --> V3{"password >= 4 chars?"}
+    V3 -- no --> E3["#signup-err: min 4 characters"]
+    V3 -- yes --> P["POST /api/auth/signup<br/>withPending Creating account…"]
+    P -- 201 --> OK["setToken -> navigate #dashboard"]
+    P -- "400 dup email" --> E4["#signup-err: account already exists"]
 
     classDef err fill:#FEF2F2,stroke:#DC2626,color:#0F172A;
     class E1,E2,E3,E4 err;
@@ -154,8 +155,8 @@ On success the new account starts with `onboarding_done = 0`, so `route()` sends
 ```mermaid
 stateDiagram-v2
     [*] --> Login
-    Login --> Signup: click "Create account"
-    Signup --> Login: click "Log in"
+    Login --> Signup: click 'Create account'
+    Signup --> Login: click 'Log in'
     note right of Login
       setAuthMode(mode):
       • toggles .active on the tab
