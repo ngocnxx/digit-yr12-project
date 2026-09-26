@@ -7,7 +7,7 @@ import { trace } from '../debug.js';
 import { navigate } from '../router.js';
 
 // Mirrors the backend's minimum; the server re-checks, this is just fast feedback.
-const MIN_PASSWORD_LEN = 4;
+const MIN_PASSWORD_LEN = 8;
 
 // Reset the screen to a clean slate every time it is (re)entered: default to the
 // login tab, clear all fields, hide any leftover error. Called by route().

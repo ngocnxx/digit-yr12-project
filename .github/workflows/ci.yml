@@ -1,8 +1,13 @@
 name: CI
 
+# Day to day, run this on your own Mac with act (runs GitHub Actions locally in Docker):
+#   act workflow_dispatch -W .github/workflows/ci.yml
+# On GitHub it only runs when a version tag (v1.0.0, v1.1.0, ...) is pushed, and only
+# if that tag is on the main branch. It can also be started by hand from the Actions tab.
 on:
   push:
-  pull_request:
+    tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -12,6 +17,14 @@ jobs:
         working-directory: back-end
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history, so we can check the tag is on main
+
+      - name: Tag must be on main
+        if: github.ref_type == 'tag'
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+            || { echo "Tag $GITHUB_REF_NAME is not on main. Tag a commit on main."; exit 1; }
 
       - uses: actions/setup-python@v5
         with:
@@ -20,11 +33,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Lint (ruff)
-        run: ruff check .
-
-      - name: Format check (ruff)
-        run: ruff format --check .
-
+      # No ruff steps: the code stays exactly as submitted (never run ruff format on it),
+      # and ruff is not in requirements.txt. The tests are what prove the app works.
       - name: Tests (pytest)
         run: pytest

@@ -20,3 +20,15 @@ __pycache__/
 
 # Defensive (no npm in this project, but keep clones clean)
 node_modules/
+
+# Terraform (state files can hold secrets; keep .terraform.lock.hcl tracked)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.tfvars
+infra/backend.hcl
+# Local copies of each front-end deploy (for rollback)
+infra/.deploys/

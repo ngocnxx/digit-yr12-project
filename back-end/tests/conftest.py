@@ -31,7 +31,7 @@ def auth_headers(client):
         json={
             "name": "Aroha Smith",
             "email": "aroha@example.com",
-            "password": "secret",
+            "password": "secret-pass",
             "yearLevel": 12,
         },
     )

@@ -40,6 +40,7 @@ def end():
     data = request.get_json(silent=True) or {}
     subject_id = data.get("subjectId")
     db = get_db()
+    db.execute("BEGIN IMMEDIATE")  # one writer at a time while every topic is updated
     _owned_subject(db, subject_id, g.user_id)
 
     topics = db.execute(

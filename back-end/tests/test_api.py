@@ -8,7 +8,7 @@ from __future__ import annotations
 def test_signup_returns_token_and_user(client):
     res = client.post(
         "/api/auth/signup",
-        json={"name": "Aroha", "email": "a@example.com", "password": "secret", "yearLevel": 12},
+        json={"name": "Aroha", "email": "a@example.com", "password": "secret-pass", "yearLevel": 12},
     )
     assert res.status_code == 201
     body = res.get_json()
@@ -20,7 +20,7 @@ def test_signup_returns_token_and_user(client):
 
 
 def test_signup_duplicate_email_is_400(client):
-    payload = {"name": "A", "email": "dup@example.com", "password": "secret"}
+    payload = {"name": "A", "email": "dup@example.com", "password": "secret-pass"}
     client.post("/api/auth/signup", json=payload)
     res = client.post("/api/auth/signup", json=payload)
     assert res.status_code == 400
@@ -38,9 +38,9 @@ def test_signup_short_password_is_400(client):
 def test_login_then_me(client):
     client.post(
         "/api/auth/signup",
-        json={"name": "A", "email": "c@example.com", "password": "secret"},
+        json={"name": "A", "email": "c@example.com", "password": "secret-pass"},
     )
-    res = client.post("/api/auth/login", json={"email": "c@example.com", "password": "secret"})
+    res = client.post("/api/auth/login", json={"email": "c@example.com", "password": "secret-pass"})
     assert res.status_code == 200
     token = res.get_json()["token"]
 
@@ -52,7 +52,7 @@ def test_login_then_me(client):
 def test_login_wrong_password_is_401(client):
     client.post(
         "/api/auth/signup",
-        json={"name": "A", "email": "d@example.com", "password": "secret"},
+        json={"name": "A", "email": "d@example.com", "password": "secret-pass"},
     )
     res = client.post("/api/auth/login", json={"email": "d@example.com", "password": "nope"})
     assert res.status_code == 401
@@ -130,7 +130,7 @@ def test_add_topic_to_foreign_subject_is_404(client, auth_headers):
     # A second user's subject must not be writable by the first user.
     other = client.post(
         "/api/auth/signup",
-        json={"name": "B", "email": "other@example.com", "password": "secret"},
+        json={"name": "B", "email": "other@example.com", "password": "secret-pass"},
     ).get_json()
     other_sid = client.post(
         "/api/subjects",
@@ -150,7 +150,7 @@ def test_subjects_are_scoped_per_user(client, auth_headers):
     client.post("/api/subjects", json={"name": "Biology"}, headers=auth_headers)
     other = client.post(
         "/api/auth/signup",
-        json={"name": "B", "email": "scoped@example.com", "password": "secret"},
+        json={"name": "B", "email": "scoped@example.com", "password": "secret-pass"},
     ).get_json()
     listing = client.get(
         "/api/subjects", headers={"Authorization": f"Bearer {other['token']}"}
@@ -203,7 +203,7 @@ def test_log_review_stores_optional_fields_without_affecting_schedule(client, au
 def test_log_review_foreign_topic_is_404(client, auth_headers):
     other = client.post(
         "/api/auth/signup",
-        json={"name": "B", "email": "foe@example.com", "password": "secret"},
+        json={"name": "B", "email": "foe@example.com", "password": "secret-pass"},
     ).get_json()
     _sid, tid = _seed_topic(
         client,

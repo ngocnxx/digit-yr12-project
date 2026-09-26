@@ -7,7 +7,8 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (t) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
-const REQUEST_TIMEOUT_MS = 10000;
+// A cloud server can take a few seconds to wake up or to save, so wait up to 25 s
+const REQUEST_TIMEOUT_MS = 25000;
 
 // Send a request to the server with the login token
 export async function api(method, path, body) {
@@ -33,7 +34,7 @@ export async function api(method, path, body) {
     const msg =
       e.name === 'AbortError'
         ? 'The server took too long to respond. Please try again.'
-        : "Can't reach the server. Start it with: cd back-end && python app.py";
+        : "Can't reach the server. Check your connection and try again.";
     trace(`api: ${method} ${path} FAILED network/timeout`, e.name);
     const err = new Error(msg);
     err.status = 0; // network/timeout, not an HTTP status

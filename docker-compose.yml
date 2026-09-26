@@ -31,5 +31,66 @@ services:
     depends_on:
       - api
 
+  # --- Optional: the "database in S3" mode (back-end/s3db.py) ----------------
+  # Off unless you ask for it:
+  #   docker compose --profile s3 up --build -d
+  #   scripts/smoke-s3.sh
+  # "s3" is moto, a free local stand-in for Amazon S3 (5.1.21 was checked to
+  # follow S3's If-Match / If-None-Match rules). Two API copies share one
+  # database object, like two AWS Lambda copies would.
+  s3:
+    image: motoserver/moto:5.1.21
+    profiles: ["s3"]
+
+  s3-init:
+    build: ./back-end
+    profiles: ["s3"]
+    depends_on:
+      - s3
+    environment: &s3-credentials
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ap-southeast-2
+    # Make a versioned bucket (waits for the fake S3 to start)
+    command:
+      - python
+      - -c
+      - |
+        import time, boto3
+        from botocore.config import Config
+        s3 = boto3.client("s3", endpoint_url="http://s3:5000", config=Config(s3={"addressing_style": "path"}))
+        for _ in range(30):
+            try:
+                s3.create_bucket(Bucket="nrn-data-local", CreateBucketConfiguration={"LocationConstraint": "ap-southeast-2"})
+                break
+            except s3.exceptions.BucketAlreadyOwnedByYou:
+                break
+            except Exception:
+                time.sleep(1)
+        s3.put_bucket_versioning(Bucket="nrn-data-local", VersioningConfiguration={"Status": "Enabled"})
+        print("bucket ready")
+
+  api-s3a: &api-s3
+    build: ./back-end
+    profiles: ["s3"]
+    depends_on:
+      s3-init:
+        condition: service_completed_successfully
+    ports:
+      - "5061:5000"
+    environment:
+      <<: *s3-credentials
+      SECRET_KEY: "local-s3-test-key-shared-by-both-copies-0123456789"
+      DATABASE_PATH: "/tmp/navigator.db"
+      S3DB_BUCKET: nrn-data-local
+      S3DB_ENDPOINT_URL: "http://s3:5000"
+      GUNICORN_CMD_ARGS: "--workers 1 --threads 1"
+      CORS_ORIGIN: '^http://(127\.0\.0\.1|localhost):550[01]$$'
+
+  api-s3b:
+    <<: *api-s3
+    ports:
+      - "5062:5000"
+
 volumes:
   db_data:

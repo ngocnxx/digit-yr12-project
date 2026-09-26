@@ -23,25 +23,21 @@
   <!-- Shown only if the module app never booted ( serve-guard above). -->
   <div id="serve-hint" class="serve-hint hidden">
     <div class="serve-hint-card">
-      <h2>This page needs to be served</h2>
-      <p>The app uses ES modules, which browsers only load over <code>http(s)</code> — not from a
-        double-clicked file.</p>
-      <p><strong>Run it:</strong> <code>python3 -m http.server 5500 --directory front-end</code>,
-        then open <a href="http://127.0.0.1:5500/">http://127.0.0.1:5500/</a></p>
+      <h2>The page did not finish loading</h2>
+      <p>Please reload the page. If it keeps happening, try again in a few minutes.</p>
+      <p class="muted small">Opened the file directly? It needs a web server:
+        <code>python3 -m http.server 5500 --directory front-end</code></p>
     </div>
   </div>
 
   <!-- Shown when the Flask server is not answering (see main.js checkServer). -->
   <div id="server-hint" class="serve-hint hidden">
     <div class="serve-hint-card">
-      <h2>The back-end is not running</h2>
-      <p>This app keeps your subjects and reviews on a small Flask server. Start it in a second
-        terminal, then reload this page.</p>
-      <p><strong>Start it:</strong> <code>cd back-end &amp;&amp; python app.py</code></p>
-      <p class="muted small">It should say: Running on http://127.0.0.1:5050</p>
-      <p class="muted small">On GitHub Codespaces, start it with
-        <code>python3 -m flask run --host=0.0.0.0 --port=5050</code>, then open the Ports tab
-        and set port 5050 visibility to <strong>Public</strong>.</p>
+      <h2>Can't reach the server right now</h2>
+      <p>Your subjects and reviews are safe. Check your internet connection, then reload this
+        page in a moment.</p>
+      <p class="muted small">Running it yourself? Start the back-end with
+        <code>cd back-end &amp;&amp; python app.py</code></p>
     </div>
   </div>
 
@@ -103,7 +99,7 @@
           </div>
           <div class="field">
             <label for="signup-pw">Password</label>
-            <input class="input" id="signup-pw" type="password" placeholder="At least 4 characters" autocomplete="new-password">
+            <input class="input" id="signup-pw" type="password" placeholder="At least 8 characters" autocomplete="new-password">
           </div>
           <div class="field">
             <label for="signup-pw2">Confirm password</label>

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from flask import Blueprint, g, jsonify, request
 
+import s3db
 import scheduling
 from auth import require_auth
 from clock import today
@@ -25,7 +26,8 @@ def _review_public(row) -> dict:
         "confidence": row["confidence"],
         "evidence": row["evidence"],
         "reflection": row["reflection"],
-        "attachment": row["attachment"],
+        # Only say whether there is a photo. The photo itself is fetched on its own.
+        "hasAttachment": row["attachment"] is not None,
         "attachmentName": row["attachment_name"],
         "interval": row["interval"],
         "nextDue": row["next_due"],
@@ -49,8 +51,11 @@ def log_review():
     """Log a review and update the topic's next due date."""
     data = request.get_json(silent=True) or {}
     topic_id = data.get("topicId")
+    # Check and store the photo first (in S3 mode it becomes its own S3 object)
+    attachment = s3db.save_photo(g.user_id, _clean_attachment(data.get("attachment")))
 
     db = get_db()
+    db.execute("BEGIN IMMEDIATE")  # one writer at a time, so two saves cannot mix up
     # Ownership: the topic must sit under a subject owned by this user.
     row = db.execute(
         """SELECT t.* FROM topics t
@@ -65,7 +70,6 @@ def log_review():
     confidence = (data.get("confidence") or "").strip() or None
     evidence = (data.get("evidence") or "").strip() or None
     reflection = (data.get("reflection") or "").strip() or None
-    attachment = _clean_attachment(data.get("attachment"))
     attachment_name = (data.get("attachmentName") or "").strip()[:120] or None
 
     db.execute(
@@ -94,6 +98,25 @@ def log_review():
     updated = db.execute("SELECT * FROM topics WHERE id = ?", (topic_id,)).fetchone()
     review = db.execute("SELECT * FROM reviews WHERE id = ?", (cur.lastrowid,)).fetchone()
     return jsonify(topic=topic_public(updated), review=_review_public(review)), 201
+
+
+@bp.get("/reviews/<int:review_id>/attachment")
+@require_auth
+def review_attachment(review_id: int):
+    """Send one review's photo, and only to the student who owns it."""
+    row = get_db().execute(
+        """SELECT r.attachment, r.attachment_name FROM reviews r
+             JOIN topics t ON t.id = r.topic_id
+             JOIN subjects s ON s.id = t.subject_id
+            WHERE r.id = ? AND s.user_id = ? AND r.attachment IS NOT NULL""",
+        (review_id, g.user_id),
+    ).fetchone()
+    if not row:
+        raise ApiError("That photo could not be found.", status=404)
+    return jsonify(
+        attachment=s3db.load_photo(row["attachment"]),
+        attachmentName=row["attachment_name"],
+    )
 
 
 @bp.get("/priorities")

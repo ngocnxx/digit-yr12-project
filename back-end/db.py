@@ -24,7 +24,9 @@ def _database_path() -> str:
 def get_db() -> sqlite3.Connection:
 
     if "db" not in g:
-        conn = sqlite3.connect(_database_path())
+        # When the database lives in S3 (s3db.py), open the latest local copy of it
+        sync = current_app.config.get("DB_SYNC")
+        conn = sqlite3.connect(sync.pull() if sync is not None else _database_path())
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON") #turn on relational link
         g.db = conn

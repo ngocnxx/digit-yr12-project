@@ -50,10 +50,11 @@ export async function route() {
     try {
       state.currentUser = (await api('GET', '/api/auth/me')).user;
     } catch (e) {
-      // Server not running (status 0) is not the same as a bad login.
-      // Keep the token so the student stays signed in once the server is back.
-      if (e.status === 0) {
-        trace('router: server is down, keeping the token');
+      // Only 401 means the login is bad. A server that is down (0), busy (429/503)
+      // or erroring (500) is not the student's fault, so keep the token and let
+      // them carry on once the server is back.
+      if (e.status !== 401) {
+        trace('router: server problem, keeping the token', e.status);
         hide($('#topbar'));
         showScreen('screen-auth');
         hydrateAuth();

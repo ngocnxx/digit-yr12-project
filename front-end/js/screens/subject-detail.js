@@ -29,7 +29,7 @@ function confTag(key) {
 
 // True if this review has anything worth opening
 function hasNote(review) {
-  return !!(review.evidence || review.reflection || review.attachment);
+  return !!(review.evidence || review.reflection || review.hasAttachment);
 }
 
 // Escape the text first, then turn any web address into a real link.
@@ -148,6 +148,11 @@ export async function openReviewNote(topicId, reviewIndex) {
     if (!review) return toast('That note could not be found.');
     trace('subject-detail: open note', { topicId, reviewIndex });
 
+    // Photos are big, so fetch this one only now, when the note is opened
+    const photo = review.hasAttachment
+      ? await api('GET', `/api/reviews/${review.id}/attachment`)
+      : null;
+
     openModalFromHTML(`
       <div class="modal-card note-card">
         <h2>Review note</h2>
@@ -165,12 +170,12 @@ export async function openReviewNote(topicId, reviewIndex) {
             : ''
         }
         ${
-          review.attachment
+          photo
             ? `<div class="note-block"><h3>Attached photo</h3>
-                 <a href="${esc(review.attachment)}" target="_blank" rel="noopener noreferrer">
-                   <img class="note-img" src="${esc(review.attachment)}" alt="${esc(review.attachmentName || 'Attached photo')}">
+                 <a href="${esc(photo.attachment)}" target="_blank" rel="noopener noreferrer">
+                   <img class="note-img" src="${esc(photo.attachment)}" alt="${esc(photo.attachmentName || 'Attached photo')}">
                  </a>
-                 <p class="muted small">${esc(review.attachmentName || '')}</p>
+                 <p class="muted small">${esc(photo.attachmentName || '')}</p>
                </div>`
             : ''
         }

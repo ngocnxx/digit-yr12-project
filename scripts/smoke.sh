@@ -17,7 +17,7 @@ code=$(curl -s -o /dev/null -w '%{http_code}' "$API_BASE/api/health")
 [ "$code" = 200 ] && pass "health 200" || fail "health $code"
 
 curl -s -X POST "$API_BASE/api/auth/signup" -H 'Content-Type: application/json' \
-  -d "{\"name\":\"Smoke\",\"email\":\"$EMAIL\",\"password\":\"secret\",\"yearLevel\":12}" > "$TMP/signup.json"
+  -d "{\"name\":\"Smoke\",\"email\":\"$EMAIL\",\"password\":\"secret-pass\",\"yearLevel\":12}" > "$TMP/signup.json"
 TOKEN=$(python3 -c "import json;print(json.load(open('$TMP/signup.json'))['token'])")
 [ -n "$TOKEN" ] && pass "signup → token" || fail "signup"
 AUTH=(-H "Authorization: Bearer $TOKEN")

@@ -39,11 +39,14 @@ def topic_public(row: sqlite3.Row) -> dict:
 
 def review_public(row: sqlite3.Row) -> dict:
     return {
+        "id": row["id"],
         "reviewedDate": row["reviewed_date"],
         "confidence": row["confidence"],
         "evidence": row["evidence"],
         "reflection": row["reflection"],
-        "attachment": row["attachment"],
+        # Photos are big, so the list only says if there is one.
+        # The photo itself comes from GET /api/reviews/<id>/attachment.
+        "hasAttachment": bool(row["has_attachment"]),
         "attachmentName": row["attachment_name"],
         "nextDue": row["next_due"],
     }
@@ -76,6 +79,7 @@ def create_subject():
     colour = (data.get("colour") or "").strip() or None
 
     db = get_db()
+    db.execute("BEGIN IMMEDIATE")  # one writer at a time, so a double tap cannot make two
     dup = db.execute(
         "SELECT 1 FROM subjects WHERE user_id = ? AND name = ? AND archived = 0",
         (g.user_id, name),
@@ -104,8 +108,11 @@ def list_subjects():
             st = scheduling.status_of(t, now)
             t["status"] = st["status"]
             t["statusLabel"] = scheduling.status_label(st)
+            # Name the columns, so the photo text is never read here
             history = db.execute(
-                "SELECT * FROM reviews WHERE topic_id = ? ORDER BY id",
+                """SELECT id, reviewed_date, confidence, evidence, reflection, attachment_name,
+                          next_due, attachment IS NOT NULL AS has_attachment
+                     FROM reviews WHERE topic_id = ? ORDER BY id""",
                 (t["id"],),
             ).fetchall()
             t["reviews"] = [review_public(r) for r in history]

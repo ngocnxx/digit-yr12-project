@@ -17,7 +17,11 @@
 // means "ask the same address this page came from".
 function backendUrl() {
   if (window.NRN_API_BASE) return window.NRN_API_BASE; // manual override
-  const fromSeparateServer = location.origin.includes('5500') || location.port === '5501';
+  // Check the port itself, so a web address that just contains "5500" is not fooled
+  const fromSeparateServer =
+    location.port === '5500' ||
+    location.port === '5501' ||
+    location.hostname.endsWith('-5500.app.github.dev');
   if (!fromSeparateServer) return ''; // Flask served this page
   if (location.hostname.endsWith('.app.github.dev')) {
     return location.origin.replace('-5500.', '-5050.');

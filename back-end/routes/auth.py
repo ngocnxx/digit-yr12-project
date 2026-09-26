@@ -12,7 +12,7 @@ from errors import ApiError, require_str
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
-MIN_PASSWORD_LEN = 4
+MIN_PASSWORD_LEN = 8
 
 #repackages safe public info to send bak
 def user_public(row: sqlite3.Row) -> dict:
@@ -38,19 +38,22 @@ def signup():
     name = require_str(data.get("name"), "name")
     email = require_str(data.get("email"), "email")
     password = data.get("password") or ""
-    print(f"[trace] POST /api/auth/signup email={email!r}", flush=True)  # debug
+    # No email in the logs: students may be under 18
+    print("[trace] POST /api/auth/signup", flush=True)  # debug
     if len(password) < MIN_PASSWORD_LEN:
         raise ApiError(f"Password must be at least {MIN_PASSWORD_LEN} characters.")
     try:
         year_level = int(data.get("yearLevel", 12))
     except (TypeError, ValueError):
         year_level = 12
+    # Hashing is slow on purpose (about 1 s), so do it before opening the database
+    password_hash = hash_password(password)
 
     db = get_db()
     try:
         cur = db.execute(
             "INSERT INTO users (name, email, password_hash, year_level) VALUES (?, ?, ?, ?)",
-            (name, email, hash_password(password), year_level),
+            (name, email, password_hash, year_level),
         )
         db.commit()
     except sqlite3.IntegrityError as err:
@@ -69,7 +72,7 @@ def login():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip()
     password = data.get("password") or ""
-    print(f"[trace] POST /api/auth/login email={email!r}", flush=True)  # debug; never log password
+    print("[trace] POST /api/auth/login", flush=True)  # debug; never log the email or password
     if not email or not password:
         raise ApiError("Please enter your email and password.")
 
