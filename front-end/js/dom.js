@@ -1,7 +1,9 @@
-// DOM helpers — selectors, show/hide, HTML escaping, toast, and modal plumbing.
+// Helper functions for the page: find elements, show/hide, safe text, messages.
 
-export const $ = (sel, root = document) => root.querySelector(sel); //sel (selector= what you're hunting for), searches the root = document ; $= grab 1 specific item
-export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));//$$ grab every matching item on the screen; array  from packs the messy node list (of all the items) into clean js array(list)
+import { icon } from './icons.js';
+
+export const $ = (sel, root = document) => root.querySelector(sel); // find one element
+export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel)); // find all matching elements
 
 export function show(el) {
   if (el) el.classList.remove('hidden');
@@ -10,7 +12,7 @@ export function hide(el) {
   if (el) el.classList.add('hidden');
 }
 
-// Escape user-supplied text before inserting into innerHTML (XSS-safe).
+// Make user text safe to put in HTML (stops broken characters).
 export function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')
@@ -20,15 +22,25 @@ export function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Toast notification. "success" shows a green pill that stays longer.
+const TOAST_MS = { success: 3600, default: 2200 };
+
 let toastTimer = null;
-export function toast(msg) {
+export function toast(msg, variant = 'default') {
   const el = $('#toast');
   if (!el) return;
-  el.textContent = msg;
-  void el.offsetWidth; // force reflow so the transition re-fires
-  el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  const isSuccess = variant === 'success';
+  // Set className first so it does not remove the .show class we add next
+  el.className = 'toast' + (isSuccess ? ' is-success' : '');
+  el.innerHTML =
+    (isSuccess ? icon('circle-check-big', { size: 17 }) : '') + `<span>${esc(msg)}</span>`;
+  void el.offsetWidth; // reset the animation
+  el.classList.add('show');
+  toastTimer = setTimeout(
+    () => el.classList.remove('show'),
+    isSuccess ? TOAST_MS.success : TOAST_MS.default,
+  );
 }
 
 export function openModalFromHTML(html) {
@@ -50,8 +62,7 @@ export function closeModal() {
   }, 220);
 }
 
-// Run an async action while disabling a button and showing pending text, so
-// API calls never feel frozen. Restores the original label afterwards.
+// Disable a button while waiting for the server, then restore it.
 export async function withPending(btn, pendingText, fn) {
   if (!btn) return fn();
   const original = btn.textContent;

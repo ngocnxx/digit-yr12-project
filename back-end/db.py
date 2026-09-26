@@ -1,8 +1,5 @@
-"""SQLite access — connection helper, per-request lifecycle, and init_db().
+"""SQLite access that include connection helper, per-request lifecycle, and init_db().
 
-Keeps all database concerns in one place. The scheduling engine (scheduling.py)
-must NOT import this module — it stays pure Python so it is unit-testable in
-isolation (see CLAUDE.md).
 """
 
 from __future__ import annotations
@@ -15,38 +12,62 @@ from flask import current_app, g
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
-
+#finding the database path
 def _database_path() -> str:
-    """Resolve the SQLite file path from Flask config, falling back to env."""
+
     if current_app:
         return current_app.config["DATABASE_PATH"]
-    return os.environ.get("DATABASE_PATH", "navigator.db")
+    path = Path(os.environ.get("DATABASE_PATH", "navigator.db"))
+    return str(path if path.is_absolute() else Path(__file__).parent / path)
 
-
+#open connection -> if connection is not present then create it
 def get_db() -> sqlite3.Connection:
-    """Return the per-request connection, creating it on first use."""
+
     if "db" not in g:
         conn = sqlite3.connect(_database_path())
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA foreign_keys = ON") #turn on relational link
         g.db = conn
     return g.db
 
-
+#pull the data then completely destroy it (close connection)
 def close_db(_exception: BaseException | None = None) -> None:
-    """Teardown handler — close the request connection if it was opened."""
     db = g.pop("db", None)
     if db is not None:
         db.close()
 
+# Columns added to schema.sql after navigator.db was first created. 
+_NEW_COLUMNS = {
+    "users": [("daily_cap", "INTEGER NOT NULL DEFAULT 5")],
+    "subjects": [("internal_mode", "INTEGER NOT NULL DEFAULT 0")],
+    "reviews": [
+        ("evidence", "TEXT"),
+        ("reflection", "TEXT"),
+        ("attachment", "TEXT"),
+        ("attachment_name", "TEXT"),
+    ],
+}
 
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    for table, columns in _NEW_COLUMNS.items():
+        existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        for name, ddl in columns:
+            if name not in existing:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+    conn.commit()
+
+
+# build the tables
 def init_db(database_path: str | None = None) -> None:
-    """Create all tables from schema.sql. Safe to run repeatedly (IF NOT EXISTS)."""
+    """Create all tables from schema.sql, then migrate any pre-existing database
+    to pick up columns added since it was first created. Safe to run repeatedly."""
     path = database_path or _database_path()
     conn = sqlite3.connect(path)
     try:
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
         conn.commit()
+        _migrate(conn)
     finally:
         conn.close()
 

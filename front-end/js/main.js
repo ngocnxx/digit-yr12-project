@@ -1,9 +1,8 @@
-// ✅
-// Composition root — imports every screen handler, wires one delegated click
-// listener + keyboard shortcuts, and starts the router. This is the only script
-// the HTML loads (`<script type="module" src="js/main.js">`).
+
+// Main entry point. Sets up the global click handler and keyboard shortcuts.
 //import all these things from these files so i can use them
 import { api, clearToken } from './api.js';
+import { API_BASE } from './config.js';
 import { $, closeModal, toast } from './dom.js';
 import { state } from './state.js';
 import { navigate, route } from './router.js';
@@ -15,24 +14,33 @@ import {
   obNext,
   obSkip,
 } from './screens/onboarding.js';
-
-// Signal that the ES-module graph loaded and ran. The classic serve-guard in
-// index.html checks this flag; if it's never set (e.g. opened via file://, where
-// browsers block module imports) it shows a "serve me" help card instead of a
-// blank page.
+import { trace } from './debug.js'; // debug tracer (on with ?debug=1)
+import { hydrateIcons } from './icons.js';
+import { setDashTab, toggleMoreTopics } from './screens/dashboard.js';
+import { attachFile, openLogReview, submitLogReview } from './screens/log-review.js';
+import { onToggleInternal, openReviewNote } from './screens/subject-detail.js';
+import { openAddSubject, openAddTopic, submitAddSubject, submitAddTopic } from './screens/add.js';
+// Signal that the ES-module graph loaded and ran.
 window.__NRN_BOOTED = true;
 
-// ── Global click delegation ──
-//hey browser, stad guard at top page-> run this everytime users click on screen. (e)= event -> info package
-document.body.addEventListener('click', async (e) => { 
+// Global click handler
+//hey browser, stad guard at top page-> run this everytime users click on screen.
+document.body.addEventListener('click', async (e) => {
   // Let an open modal manage its own clicks first.
-  if (e.target.closest('#modal-overlay')) { //look inside the event packet and find htm elemnt user finger touched, look at elemnt and see its family tree to see if it live inside container with id="modal"
-    if (e.target.closest('[data-action="modal-cancel"]')) closeModal();
-    return;
+  if (e.target.closest('#modal-overlay')) {
+    // Only handle Cancel here; other modal buttons fall through below
+    if (e.target.closest('[data-action="modal-cancel"]')) {
+      closeModal();
+      return;
+    }
   }
 
   const act = e.target.closest('[data-action]');
   if (!act) return;
+
+  // Work out which action was clicked
+  trace('main: click →', act.dataset.action + (act.dataset.mode ? ` (mode=${act.dataset.mode})` : ''));
+
 
   try {
     switch (act.dataset.action) {
@@ -64,6 +72,51 @@ document.body.addEventListener('click', async (e) => {
         await obSkip();
         break;
 
+      // Dashboard tabs / log review
+      case 'dash-tab':
+        setDashTab(act.dataset.tab);
+        break;
+      case 'show-more-topics':
+        toggleMoreTopics();
+        break;
+      case 'view-subject':
+        navigate('#subject-' + act.dataset.subjectId);
+        break;
+      case 'open-log': {
+        // Look the topic up fresh, then open the modal; refresh the screen on save.
+        const tid = Number(act.dataset.topicId);
+        const { subjects } = await api('GET', '/api/subjects');
+        const topic = subjects.flatMap((s) => s.topics).find((t) => t.id === tid);
+        if (topic) openLogReview(topic, route);
+        break;
+      }
+      case 'lr-submit':
+        await submitLogReview(act);
+        break;
+      case 'lr-attach':
+        attachFile();
+        break;
+      case 'toggle-internal':
+        onToggleInternal(act.dataset.subjectId);
+        break;
+      case 'view-note':
+        await openReviewNote(act.dataset.topicId, act.dataset.reviewIndex);
+        break;
+
+      // Add subject / add topic (modals, refresh the screen on success)
+      case 'add-subject':
+        openAddSubject(route);
+        break;
+      case 'add-subject-submit':
+        await submitAddSubject(act);
+        break;
+      case 'add-topic':
+        openAddTopic(act.dataset.subjectId, act.dataset.subjectName, route);
+        break;
+      case 'add-topic-submit':
+        await submitAddTopic(act);
+        break;
+
       // Navigation
       case 'nav-dashboard':
         navigate('#dashboard');
@@ -75,7 +128,7 @@ document.body.addEventListener('click', async (e) => {
         try {
           await api('POST', '/api/auth/logout');
         } catch {
-          /* logging out is best-effort */
+          // logging out is best-effort //
         }
         clearToken();
         state.currentUser = null;
@@ -88,7 +141,8 @@ document.body.addEventListener('click', async (e) => {
   }
 });
 
-// ── Keyboard shortcuts ──
+
+// Keyboard shortcuts 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if ($('#modal-overlay').classList.contains('show')) closeModal();
@@ -96,6 +150,7 @@ document.addEventListener('keydown', (e) => {
   }
   // Enter submits the auth form.
   if (e.key === 'Enter' && !$('#screen-auth').classList.contains('hidden')) {
+    trace('main: Enter key submits the', state.authMode, 'form');
     if (state.authMode === 'login') doLogin($('[data-action="do-login"]'));
     else doSignup($('[data-action="do-signup"]'));
   }
@@ -104,7 +159,20 @@ document.addEventListener('keydown', (e) => {
     obAddTopic();
   }
 });
+// Check the Flask server is awake, and say so plainly if it is not.
+async function checkServer() {
+  try {
+    const res = await fetch(API_BASE + '/api/health');
+    if (!res.ok) throw new Error('bad status');
+    trace('main: back-end is up');
+  } catch {
+    trace('main: back-end is NOT reachable');
+    $('#server-hint')?.classList.remove('hidden');
+  }
+}
 
-// ── Startup ──
+//Startup
 window.addEventListener('hashchange', route);
 route(); // modules are deferred, so the DOM is already parsed here.
+hydrateIcons(); // replace every static [data-icon] element with its Lucide SVG
+checkServer();

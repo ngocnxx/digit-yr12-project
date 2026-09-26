@@ -1,0 +1,11 @@
+## NCEA Review Navigator - back-end libraries (Python 3.11+)
+## Install them all at once with:  pip install -r requirements.txt
+
+Flask>=3.1,<4          ## web framework, builds the API
+Werkzeug>=3.1,<4       ## password hashing (auth.py)
+PyJWT>=2.10,<3         ## login tokens (auth.py)
+Flask-Cors>=5,<6       ## lets the front-end call the API from another port
+python-dotenv>=1,<2    ## reads settings from the .env file
+
+## For running the tests
+pytest>=8,<9

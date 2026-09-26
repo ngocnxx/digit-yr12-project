@@ -1,11 +1,11 @@
-/* css/tokens.css */
-/* Design tokens — the single source of colour, spacing, radius, shadow, type.
+/* NCEA Review Navigator- single stylesheet (development stage).
+   */
 
-   Palette v3 — light & pastel: an airy off-white canvas, calm periwinkle, and
-   soft pastel accents (sage / honey / coral / lilac). Deliberately un-industrial
-   and low-contrast-warm so the app feels human and calm, per the updated mockups. */
+/* 
+   TOKENS: the  source of colour, spacing, radius, shadow, type.
+    */
 :root {
-  /* Blues — calm periwinkle (primary actions live at 500; pastels at 50-200) */
+  /* Blues*/
   --blue-50:  #EEF3FF;
   --blue-100: #E3EAFF;
   --blue-200: #CDD9FB;
@@ -13,22 +13,22 @@
   --blue-500: #7E93EA;
   --blue-600: #6A80DC;
   --blue-700: #4C5EA8;
-  /* Greens — sage */
+  /* Greens- sage */
   --green-50:  #EEF7EF;
   --green-500: #86BE90;
   --green-600: #6FA97A;
-  /* Ambers — soft honey */
+  /* Ambers— soft honey */
   --amber-50:  #FCF4E6;
   --amber-500: #E7B368;
   --amber-600: #CE9A4C;
-  /* Reds — soft coral */
+  /* Reds */
   --red-50:  #FCEEEC;
   --red-500: #E58C7E;
   --red-600: #D06E5E;
-  /* Lilac — accent (subject tags / highlights) */
+  /* Lilac  */
   --lilac-50:  #F3EFFB;
   --lilac-500: #A78BD0;
-  /* Warm neutral ramp (greige) — light and airy */
+  /* Warm neutral */
   --slate-50:  #FAF9F5;
   --slate-100: #F3F1EB;
   --slate-200: #E8E4DA;
@@ -40,23 +40,23 @@
   --slate-800: #35302A;
   --slate-900: #26221C;
   --white: #FFFFFF;
-  /* Warm cream — hero / intro cards / header band */
+  /* Warm cream */
   --cream-50:  #FCF5EC;
   --cream-100: #F7ECDD;
 
-  /* Radius — soft and rounded */
+  /* Radius*/
   --radius-sm:   8px;
   --radius-md:   12px;
   --radius-lg:   18px;
   --radius-xl:   24px;
   --radius-full: 9999px;
 
-  /* Shadows — warm-tinted and gentle */
+  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(70, 60, 45, .04);
   --shadow-md: 0 4px 16px rgba(70, 60, 45, .06);
   --shadow-lg: 0 12px 36px rgba(70, 60, 45, .09);
 
-  /* Typography — modern system font stack (no web fonts to download) */
+  /* Typography*/
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
           sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 
@@ -64,9 +64,9 @@
   --focus: 0 0 0 3px rgba(126, 147, 234, .32);
 }
 
-/* css/base.css */
-/* Base — reset, document defaults, typography, shared utilities. */
-
+/* 
+   BASE: reset, document defaults, typography, shared utilities.
+    */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -106,32 +106,44 @@ h1, h2, h3, h4 {
   font-weight: 700;
   line-height: 1.25;
 }
-h1 { font-size: 28px; }
-h2 { font-size: 22px; }
-h3 { font-size: 18px; }
-h4 { font-size: 15px; }
-p  { margin: 0 0 12px; }
+h1 { 
+  font-size: 28px; }
+h2 { 
+  font-size: 22px; }
+h3 { 
+  font-size: 18px; }
+h4 { 
+  font-size: 15px; }
+p  {
+   margin: 0 0 12px; }
 
 /* Utilities */
 .hidden { display: none !important; }
 .muted  { color: var(--slate-400); }
 .small  { font-size: 13px; }
 
-/* Inline Lucide icons — inherit the current text colour, align with the baseline. */
-.icon { display: inline-block; vertical-align: -0.15em; flex-shrink: 0; }
+/* Inline Lucide icons */
+.icon {
+   display: inline-block; 
+   vertical-align: -0.15em;
+    flex-shrink: 0; }
 
-/* Responsive — tighten card padding and buttons on small screens. */
+/* Responsive   */
 @media (max-width: 540px) {
-  body { font-size: 15px; }
-  .auth-card, .ob-card { padding: 28px 20px; }
-  .btn-lg { padding: 12px 22px; font-size: 15px; }
-  .dashboard { padding: 20px 16px; }
+  body {
+     font-size: 15px; 
+    }
+  .auth-card, .ob-card { 
+    padding: 28px 20px; }
+  .btn-lg {
+     padding: 12px 22px; font-size: 15px; }
 }
 
-/* css/components.css */
-/* Reusable components — buttons, form fields, chips, toast, modal. */
+/* 
+   COMPONENTS: buttons, form fields, chips, toast, modal.
+    */
 
-/* ── Buttons ── */
+/* Buttons  */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -174,7 +186,7 @@ p  { margin: 0 0 12px; }
 .btn-lg    { padding: 14px 28px; font-size: 16px; }
 .btn-block { width: 100%; }
 
-/* ── Form fields ── */
+/*  Form fields */
 .field { margin-bottom: 16px; }
 .field label {
   display: block;
@@ -183,8 +195,7 @@ p  { margin: 0 0 12px; }
   color: var(--slate-700);
   margin-bottom: 6px;
 }
-/* Text/select inputs. 16px font-size is deliberate: it stops iOS Safari from
-   auto-zooming the page when the field is focused. */
+/* Text/select inputs.  */
 .input, .select-input {
   width: 100%;
   padding: 10px 14px;
@@ -200,8 +211,12 @@ p  { margin: 0 0 12px; }
   border-color: var(--blue-400);
   box-shadow: var(--focus);
 }
-/* Inline error banner (e.g. #login-err). Starts `.hidden`; auth.js fills its text
-   and toggles `.hidden` to show client- or server-side validation messages. */
+/* Field-level error highlight */
+.input-error, .input-error:focus {
+  border-color: var(--red-500);
+  box-shadow: 0 0 0 3px var(--red-50);
+}
+/* Inline error banner  */
 .error-msg {
   font-size: 13px;
   color: var(--red-600);
@@ -212,7 +227,7 @@ p  { margin: 0 0 12px; }
   border-left: 3px solid var(--red-500);
 }
 
-/* ── Topic chips (onboarding) ── */
+/* Topic chips (onboarding)*/
 .topic-chips {
   display: flex;
   flex-wrap: wrap;
@@ -238,10 +253,12 @@ p  { margin: 0 0 12px; }
   font-size: 12px;
   line-height: 1;
   transition: color .15s;
+  display: inline-flex;
+  align-items: center;
 }
 .chip-remove:hover { color: var(--red-500); }
 
-/* ── Toast ── */
+/* Toast */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -264,29 +281,81 @@ p  { margin: 0 0 12px; }
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Modal ── */
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Success confirmation */
+.toast.is-success {
+  background: var(--green-600);
+  font-weight: 600;
+}
+
+/* In-modal "Log saved!" confirmation  */
+.lr-success {
+  text-align: center;
+  padding: 20px 8px 10px;
+}
+.lr-success-tick {
+  display: block;
+  color: var(--green-600);
+  margin-bottom: 12px;
+}
+.lr-success h2 { margin-bottom: 6px; }
+
+.lr-success-sub {
+  color: var(--slate-500);
+  font-size: 14px;
+  margin: 0 auto;
+  max-width: 34ch;
+}
+@keyframes lr-tick-pop {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+.lr-success-tick svg {
+  animation: lr-tick-pop .34s cubic-bezier(.2, .9, .3, 1.5) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lr-success-tick svg { animation: none; }
+}
+
+/*  Modal */
 .modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, .45);
   z-index: 1000;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 .modal-overlay.show { display: flex; }
 
-/* ── Slice-2 components: soft/danger buttons, modal, confidence, progress ── */
+
 .btn-soft {
   background: var(--blue-100);
   color: var(--blue-700);
   border-color: var(--blue-100);
 }
-.btn-soft:hover:not(:disabled) { background: var(--blue-200); border-color: var(--blue-200); }
-.btn-sm { padding: 7px 12px; font-size: 13px; }
-.btn-danger { background: var(--red-500); color: #fff; border-color: var(--red-500); }
-.btn-danger:hover:not(:disabled) { background: var(--red-600); border-color: var(--red-600); }
+.btn-soft:hover:not(:disabled) { 
+  background: var(--blue-200); 
+  border-color: var(--blue-200); 
+}
+.btn-sm {
+   padding: 7px 12px;
+    font-size: 13px; 
+  }
+.btn-danger {
+   background: var(--red-500); 
+   color: #fff;
+    border-color: var(--red-500); }
+.btn-danger:hover:not(:disabled) {
+   background: var(--red-600); 
+  border-color: var(--red-600); }
 
 .modal-card {
   background: var(--white);
@@ -295,8 +364,12 @@ p  { margin: 0 0 12px; }
   padding: 26px;
   max-width: 460px;
   width: 100%;
+  /* auto margin centres it, but lets it scroll when the modal is tall */
+  margin: auto;
 }
-.modal-card h2 { margin-bottom: 4px; }
+.modal-card h2 { 
+  margin-bottom: 4px; 
+}
 .modal-sub {
   color: var(--slate-500);
   display: flex;
@@ -312,11 +385,26 @@ p  { margin: 0 0 12px; }
   padding: 9px 12px;
   margin: 2px 0 16px;
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
-.lr-attach { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.modal-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 10px; }
+textarea.input {
+   resize: vertical;
+    min-height: 64px;
+     line-height: 1.5; }
+.lr-attach { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+   margin-top: 8px;
+    flex-wrap: wrap; }
 
-.confidence-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.confidence-row { 
+  display: flex; 
+  gap: 8px;
+   flex-wrap: wrap; 
+  }
 .conf-pill {
   padding: 7px 14px;
   border-radius: var(--radius-full);
@@ -326,7 +414,46 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   font-size: 13px;
   font-weight: 600;
 }
-.conf-pill.active { background: var(--blue-500); color: #fff; border-color: var(--blue-500); }
+.conf-pill.active {
+  background: var(--blue-500);
+  color: #fff;
+  border-color: var(--blue-500); }
+
+/* Log review modal: clear text sizes so the title reads as the biggest thing */
+.lr-card h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.lr-card .field label {
+  font-size: 1.1rem;
+  color: var(--slate-800);
+  margin-bottom: 8px;
+}
+.lr-card .conf-pill { font-size: 0.9rem; }
+.lr-card .modal-note { font-size: 0.9rem; }
+
+/* Topic name as a badge so it sits apart from the title */
+.lr-card .modal-sub {
+  display: inline-flex;
+  width: auto;
+  background: var(--lilac-50);
+  color: var(--lilac-500);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 1.25rem;
+}
+
+/* Light card behind each step so the modal is not one block of text */
+.lr-card .field {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 1.25rem;
+}
 
 .progress {
   height: 8px;
@@ -349,15 +476,24 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   border-radius: var(--radius-full);
   white-space: nowrap;
 }
-.status-badge.is-overdue { background: var(--red-50); color: var(--red-600); }
-.status-badge.is-due { background: var(--amber-50); color: var(--amber-600); }
-.status-badge.is-new { background: var(--green-50); color: var(--green-600); }
-.status-badge.is-ok { background: var(--slate-100); color: var(--slate-500); }
+.status-badge.is-overdue {
+   background: var(--red-50);
+    color: var(--red-600); }
+.status-badge.is-due { 
+  background: var(--amber-50); 
+  color: var(--amber-600); }
+.status-badge.is-new { 
+  background: var(--green-50); 
+  color: var(--green-600); }
+.status-badge.is-ok {
+   background: var(--slate-100); 
+   color: var(--slate-500); }
 
-/* css/screens.css */
-/* Screen layouts — topbar, auth, onboarding, dashboard. */
+/*
+   SCREENS — topbar, auth, onboarding, serve-guard card.
+    */
 
-/* ── Topbar ── */
+/*  Topbar */
 #topbar {
   display: flex;
   align-items: center;
@@ -371,7 +507,11 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   font-weight: 800;
   color: var(--blue-700);
   margin-right: auto;
+  cursor: pointer;
 }
+#topbar .brand:hover {
+   color: var(--blue-600); 
+  }
 #topbar button {
   padding: 8px 16px;
   border-radius: var(--radius-md);
@@ -386,15 +526,13 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   color: var(--blue-700);
 }
 
-/* ── Centered card screens — auth + onboarding share one gradient backdrop.
-   A flex-centered, full-height container; base.css tightens padding on phones. ── */
+/* Centered card screens */
 .auth-bg, .ob-bg {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(145deg, var(--blue-50) 0%, var(--slate-100) 50%, var(--blue-50) 100%);
 }
 .auth-card, .ob-card {
   background: var(--white);
@@ -406,7 +544,7 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
 .auth-card { max-width: 440px; }
 .ob-card   { max-width: 500px; }
 
-/* ── Auth ── */
+/* Auth */
 .auth-card .brand {
   display: flex;
   align-items: center;
@@ -435,8 +573,7 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   font-size: 14px;
   margin-bottom: 24px;
 }
-/* Segmented control: two equal-width tabs. setAuthMode() toggles `.active`,
-   which fills the selected tab blue and reveals its matching form. */
+
 .auth-tabs {
   display: flex;
   margin-bottom: 24px;
@@ -458,7 +595,7 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   color: #fff;
 }
 
-/* ── Onboarding ── */
+/*Onboarding */
 .ob-dots {
   display: flex;
   justify-content: center;
@@ -472,15 +609,20 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   background: var(--slate-200);
   transition: background .25s, width .25s;
 }
-.dot.active { background: var(--blue-500); width: 28px; }
-.dot.done   { background: var(--green-500); }
+.dot.active { 
+  background: var(--blue-500); 
+  width: 28px; }
+.dot.done   { 
+  background: var(--green-500); }
 .ob-icon {
   font-size: 40px;
   text-align: center;
   margin-bottom: 16px;
-  color: var(--blue-500); /* the inline Lucide SVG inherits this */
+  color: var(--blue-500); /* the inline Lucide SVG inherit this */
 }
-.ob-step h2 { text-align: center; margin-bottom: 12px; }
+.ob-step h2 { 
+  text-align: center;
+   margin-bottom: 12px; }
 .ob-desc {
   text-align: center;
   color: var(--slate-500);
@@ -502,61 +644,51 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
 }
 .ob-topic-row .input { flex: 1; margin: 0; }
 
-/* ── Dashboard (F1 placeholder) ── */
+/* Dashboard*/
 .dashboard {
   max-width: 1000px;
   margin: 0 auto;
   padding: 32px 28px 48px;
 }
-.dashboard-greeting { margin-bottom: 4px; }
+.dashboard-greeting {
+   margin-bottom: 4px; }
 .dashboard-sub {
   color: var(--slate-500);
   margin-bottom: 24px;
-}
-.subject-card {
-  background: var(--white);
-  border: 1.5px solid var(--slate-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-}
-.subject-card h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.subject-card .subject-meta {
-  color: var(--slate-500);
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-.subject-topics {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.subject-topics li {
-  background: var(--slate-100);
-  border-radius: var(--radius-full);
-  padding: 4px 12px;
-  font-size: 13px;
-  color: var(--slate-700);
-}
-.subject-topics li .std {
-  color: var(--slate-400);
-  font-size: 12px;
-  margin-left: 4px;
 }
 .empty-state {
   text-align: center;
   color: var(--slate-500);
   padding: 40px 20px;
 }
+.empty-state .btn {
+   margin-top: 14px; }
+/* A new user lands here first, so make the next step obvious */
+.empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-full);
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+.empty-title { margin-bottom: 6px; }
+.empty-state .dashboard-sub {
+  max-width: 380px;
+  margin: 0 auto;
+}
+/* Site-wide, quiet on purpose so it never competes with real content */
+.app-footer {
+  padding: 14px 20px 18px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--slate-400);
+}
+.app-footer a { color: var(--slate-500); }
+
 .wellbeing-footer {
   margin-top: 32px;
   padding-top: 16px;
@@ -566,36 +698,7 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   color: var(--slate-500);
 }
 
-/* ── Serve-guard help card (shown only if the module app never booted) ── */
-.serve-hint {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: linear-gradient(145deg, var(--blue-50) 0%, var(--slate-100) 50%, var(--blue-50) 100%);
-}
-.serve-hint-card {
-  background: var(--white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  padding: 32px;
-  max-width: 460px;
-  width: 100%;
-}
-.serve-hint-card h2 {
-  margin-bottom: 12px;
-}
-.serve-hint-card code {
-  background: var(--slate-100);
-  border-radius: var(--radius-sm);
-  padding: 1px 6px;
-  font-size: 13px;
-}
-
-/* ── Dashboard intro cards (greeting + coverage), per the updated mockups ── */
+/* Dashboard intro cards  */
 .intro-cards {
   display: flex;
   flex-wrap: wrap;
@@ -639,10 +742,9 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
 .intro-stat-label { margin: 0; font-weight: 700; color: var(--slate-700); }
 .intro-stat-sub { margin: 0; font-size: 13px; color: var(--slate-500); }
 
-/* Subject-card heading icon inherits a calm blue. */
 .subject-icon { color: var(--blue-600); }
 
-/* ── Dashboard tabs + priorities feed (mockups 1 & 2) ── */
+/* Dashboard tabs + priorities feed */
 .dash-tabs {
   display: flex;
   gap: 28px;
@@ -658,20 +760,37 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   border-bottom: 2.5px solid transparent;
   margin-bottom: -1.5px;
 }
-.dash-tab.active { color: var(--slate-900); border-bottom-color: var(--blue-500); }
-.feed-summary { font-style: italic; color: var(--slate-500); margin-bottom: 14px; }
+.dash-tab.active { 
+  color: var(--slate-900); 
+  border-bottom-color: var(--blue-500); }
+.feed-summary { 
+  font-style: italic; 
+  color: var(--slate-500); 
+  margin-bottom: 14px; }
+
+/* Button that opens the topics sitting under the daily cap */
 .more-when-ready {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-align: center;
   color: var(--blue-700);
   background: var(--blue-50);
+  border: 1.5px solid var(--blue-100);
   border-radius: var(--radius-full);
   padding: 8px 16px;
   font-size: 13px;
+  font-weight: 600;
   margin-top: 6px;
+  transition: background .15s, border-color .15s;
 }
+.more-when-ready:hover {
+  background: var(--blue-100);
+  border-color: var(--blue-200);
+}
+.more-list { margin-top: 12px; }
 
-/* Two-column Priorities layout: feed (left) + "Your subjects" panel (right). */
+/* Two-column Priorities layout: feed (left) + "Your subjects" panel (right) */
 .dash-cols { display: flex; gap: 20px; align-items: flex-start; }
 .feed-col { flex: 1 1 auto; min-width: 0; }
 .subjects-panel {
@@ -684,15 +803,38 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   position: sticky;
   top: 16px;
 }
-.sp-title { margin-bottom: 12px; }
-.sp-row { cursor: pointer; padding: 8px 0; }
-.sp-row:hover .sp-name { color: var(--blue-700); }
-.sp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.sp-icon { color: var(--blue-600); display: grid; place-items: center; flex-shrink: 0; }
-.sp-name { flex: 1; font-weight: 600; font-size: 14px; min-width: 0; }
-.sp-pct { font-size: 13px; font-weight: 700; color: var(--slate-500); }
-.sp-row { padding: 10px 0; border-bottom: 1px solid var(--slate-100); }
-.sp-row:last-of-type { border-bottom: none; }
+.sp-title { 
+  margin-bottom: 12px; }
+.sp-row { 
+  padding: 10px 0; 
+  border-bottom: 1px solid var(--slate-100); }
+.sp-row:last-of-type { 
+  border-bottom: none;
+ }
+.sp-head { 
+  display: flex;
+  align-items: center; 
+  gap: 8px; 
+  margin-bottom: 6px; 
+  cursor: pointer; }
+.sp-head:hover .sp-name { 
+  color: var(--blue-700); }
+
+.sp-icon {
+   color: var(--blue-600); 
+   display: grid; 
+   place-items: center; 
+   flex-shrink: 0; }
+.sp-name { 
+  flex: 1;
+   font-weight: 600; 
+   font-size: 14px; 
+   min-width: 0; }
+.sp-pct { 
+  font-size: 13px; 
+  font-weight: 700;
+   color: var(--slate-500); 
+  }
 .sp-addtopic {
   display: inline-block;
   margin-top: 6px;
@@ -702,16 +844,20 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   background: none;
   padding: 0;
 }
-.sp-addtopic:hover { text-decoration: underline; }
-.subjects-panel .btn-block { margin-top: 12px; }
-.add-subjects-btn { margin-top: 8px; }
-.empty-state .btn { margin-top: 14px; }
-/* Clickable brand → dashboard */
-#topbar .brand { cursor: pointer; }
-#topbar .brand:hover { color: var(--blue-600); }
+.sp-addtopic:hover { 
+  text-decoration: underline; }
+.subjects-panel .btn-block { 
+  margin-top: 12px; }
+.add-subjects-btn { 
+  margin-top: 8px; 
+}
 @media (max-width: 720px) {
-  .dash-cols { flex-direction: column; }
-  .subjects-panel { flex-basis: auto; width: 100%; position: static; }
+  .dash-cols {
+     flex-direction: column; }
+  .subjects-panel { 
+    flex-basis: auto;
+     width: 100%; 
+     position: static; }
 }
 
 .priority-card {
@@ -724,8 +870,10 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   box-shadow: var(--shadow-sm);
   padding: 16px 18px;
   margin-bottom: 12px;
+  max-width: 100%;
 }
-.pc-left { flex: 1; min-width: 0; }
+.pc-left { flex: 1;
+  min-width: 0; }
 .subject-tag {
   display: inline-block;
   font-size: 11px;
@@ -736,8 +884,27 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   border-radius: var(--radius-full);
   margin-bottom: 6px;
 }
-.pc-topic { font-weight: 700; margin-bottom: 2px; }
-.pc-meta { font-size: 13px; color: var(--slate-500); margin-bottom: 8px; }
+.pc-topic {
+   font-weight: 700;
+    margin-bottom: 2px;
+    overflow-wrap: break-word;
+   }
+.pc-meta {
+   font-size: 13px;
+    color: var(--slate-500);
+    margin-bottom: 8px; }
+
+/* On a phone stack the card so it never scrolls sideways */
+@media (max-width: 540px) {
+  .priority-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .priority-card .btn {
+    width: 100%;
+    white-space: normal;
+  }
+}
 
 /* Subject-summary cards (Subject Details tab) */
 .subject-summary {
@@ -752,15 +919,66 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   margin-bottom: 12px;
   cursor: pointer;
 }
-.subject-summary:hover { box-shadow: var(--shadow-md); }
-.ss-icon { color: var(--blue-600); display: grid; place-items: center; flex-shrink: 0; }
-.ss-body { flex: 1; min-width: 0; }
-.ss-name { font-weight: 700; font-size: 17px; }
-.ss-meta { font-size: 13px; color: var(--slate-500); margin: 2px 0 8px; }
-.ss-pct { font-weight: 800; font-size: 18px; color: var(--slate-700); }
+.subject-summary:hover { 
+  box-shadow: var(--shadow-md); }
 
-/* ── Subject-detail screen (mockup 3) ── */
-.subject-detail { max-width: 760px; margin: 0 auto; padding: 24px; }
+.ss-icon { 
+  color: var(--blue-600); 
+  display: grid; 
+  place-items: center; 
+  flex-shrink: 0; }
+
+.ss-body { 
+  flex: 1;
+   min-width: 0; }
+
+.ss-name {
+   font-weight: 700; 
+   font-size: 17px; }
+
+.ss-meta { 
+  font-size: 13px; 
+  color: var(--slate-500);
+   margin: 2px 0 8px; }
+.ss-pct { 
+  font-weight: 800;
+   font-size: 18px;
+    color: var(--slate-700); }
+
+/* Serve-guard help card (shown only if the module web never booted) */
+.serve-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(145deg, var(--blue-50) 0%, var(--slate-100) 50%, var(--blue-50) 100%);
+}
+.serve-hint-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 32px;
+  max-width: 460px;
+  width: 100%;
+}
+.serve-hint-card h2 {
+  margin-bottom: 12px;
+}
+.serve-hint-card code {
+  background: var(--slate-100);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  font-size: 13px;
+}
+
+/* Subject-detail screen */
+.subject-detail {
+   max-width: 760px;
+    margin: 0 auto;
+    padding: 24px; }
 .link-back {
   display: inline-flex;
   align-items: center;
@@ -769,7 +987,8 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   font-weight: 600;
   margin-bottom: 16px;
 }
-.icon.flip { transform: scaleX(-1); }
+.icon.flip {
+   transform: scaleX(-1); }
 .sd-head {
   display: flex;
   align-items: center;
@@ -777,9 +996,19 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   gap: 12px;
   flex-wrap: wrap;
 }
-.sd-title { display: flex; align-items: center; gap: 10px; margin: 0; }
-.sd-coverage { color: var(--slate-500); margin: 10px 0 6px; }
-.sd-section { margin: 24px 0 10px; }
+.sd-title { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin: 0; }
+
+.sd-coverage {
+   color: var(--slate-500); 
+   margin: 10px 0 6px; }
+
+.sd-section { 
+  margin: 24px 0 10px; }
+
 .topic-row {
   display: flex;
   align-items: center;
@@ -790,16 +1019,132 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   padding: 14px 18px;
   margin-bottom: 10px;
 }
-.topic-priority { background: var(--blue-50); border-color: var(--blue-100); }
-.topic-main { flex: 1; min-width: 0; }
-.topic-name { font-weight: 700; }
-.topic-meta { font-size: 13px; color: var(--slate-500); margin-top: 2px; }
-.conf-tag { color: var(--slate-600); font-weight: 600; }
-.topic-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-.topic-history { margin-top: 8px; font-size: 13px; }
-.topic-history summary { cursor: pointer; color: var(--blue-700); }
-.topic-history ul { margin: 6px 0 0; padding-left: 16px; color: var(--slate-600); }
-.hist-note { display: block; color: var(--slate-500); font-style: italic; }
+.topic-priority { 
+  background: var(--blue-50); 
+  border-color: var(--blue-100); }
+.topic-main { 
+  flex: 1;
+   min-width: 0; }
+.topic-name {
+   font-weight: 700; }
+.topic-meta {
+   font-size: 13px; 
+   color: var(--slate-500); 
+   margin-top: 2px; }
+
+/* Confidence tags: Lucide icon and soft colour so past reviews stand out.
+   Colour only shows how the review felt. It never changes the schedule. */
+.conf-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid;
+  border-radius: var(--radius-full);
+  padding: 1px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.conf-shaky {
+  background: var(--amber-50);
+  color: var(--amber-600);
+  border-color: var(--amber-500);
+}
+.conf-okay {
+  background: var(--blue-50);
+  color: var(--blue-700);
+  border-color: var(--blue-400);
+}
+.conf-solid {
+  background: var(--green-50);
+  color: var(--green-600);
+  border-color: var(--green-500);
+}
+.conf-internal {
+  background: var(--lilac-50);
+  color: var(--lilac-500);
+  border-color: var(--lilac-500);
+}
+.topic-side {
+   display: flex; 
+   flex-direction: column; 
+   align-items: flex-end; 
+   gap: 6px; 
+   flex-shrink: 0; }
+
+.topic-history { 
+  margin-top: 8px;
+   font-size: 13px; }
+
+.topic-history summary { 
+  cursor: pointer; 
+  color: var(--blue-700);
+ }
+
+.topic-history ul { 
+  margin: 6px 0 0; 
+  padding-left: 16px; 
+  color: var(--slate-600); }
+.hist-note {
+  display: block;
+  color: var(--slate-500);
+  font-style: italic; }
+
+/* Small button on a history row that opens the saved note */
+.hist-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-full);
+  background: var(--white);
+  color: var(--blue-700);
+  font-size: 11px;
+  font-weight: 600;
+  transition: background .15s;
+}
+.hist-open:hover { background: var(--blue-50); }
+
+/* Smaller tag inside history so it does not compete with the topic's own tag */
+.topic-history .conf-tag {
+  font-size: 10.5px;
+  padding: 0 6px;
+  border-width: 1px;
+  gap: 3px;
+}
+
+/* Saved review note, opened from a history row */
+.note-block {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.note-block h3 {
+  font-size: 14px;
+  color: var(--slate-600);
+  margin-bottom: 6px;
+}
+.note-block p {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: break-word; /* long pasted links must not overflow */
+}
+.note-conf { margin-bottom: 12px; }
+/* Keep a big phone photo inside the modal instead of stretching it */
+.note-img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--slate-200);
+  background: var(--slate-100);
+}
 .internal-banner {
   background: var(--amber-50);
   color: var(--amber-600);
@@ -820,11 +1165,48 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   padding: 12px;
   font-weight: 700;
 }
-.std { color: var(--slate-400); font-size: 12px; font-weight: 500; }
 
-/* ── Settings ── */
-.settings { max-width: 560px; margin: 0 auto; padding: 24px; }
-.settings-title { display: flex; align-items: center; gap: 10px; }
+/* Box that explains what internal mode does before you press the button */
+.internal-box {
+  margin-top: 24px;
+  background: var(--amber-50);
+  border: 1.5px solid var(--amber-500);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.internal-box-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--slate-800);
+}
+.internal-box-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--slate-600);
+}
+.internal-box .btn-internal {
+  margin-top: 0;
+  background: var(--white);
+  white-space: normal;
+}
+.std { 
+  color: var(--slate-400);
+  font-size: 12px; 
+  font-weight: 500; 
+}
+
+/*Settings screen */
+.settings { 
+  max-width: 560px; 
+  margin: 0 auto; 
+  padding: 24px; }
+.settings-title { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; }
 .settings-card {
   background: var(--white);
   border: 1.5px solid var(--slate-200);
@@ -839,4 +1221,5 @@ textarea.input { resize: vertical; min-height: 64px; line-height: 1.5; }
   padding: 8px 0;
   border-bottom: 1px solid var(--slate-100);
 }
-.setting-row:last-child { border-bottom: none; }
+.setting-row:last-child { 
+  border-bottom: none; }

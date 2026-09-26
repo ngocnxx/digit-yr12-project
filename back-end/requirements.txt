@@ -1,14 +1,11 @@
-# NCEA Review Navigator — back-end dependencies (Python 3.13)
-# Pinned to latest-major 2026 releases; no backwards-compat shims.
+# NCEA Review Navigator - back-end libraries (Python 3.11+)
+# Install them all at once with:  pip install -r requirements.txt
 
-# --- runtime ---
-Flask>=3.1,<4
-Werkzeug>=3.1,<4
-PyJWT>=2.10,<3
-Flask-Cors>=5,<6
-python-dotenv>=1,<2
-gunicorn>=23,<24
+Flask>=3.1,<4          # web framework, builds the API
+Werkzeug>=3.1,<4       # password hashing (auth.py)
+PyJWT>=2.10,<3         # login tokens (auth.py)
+Flask-Cors>=5,<6       # lets the front-end call the API from another port
+python-dotenv>=1,<2    # reads settings from the .env file
 
-# --- dev / test ---
+# For running the tests
 pytest>=8,<9
-ruff>=0.8

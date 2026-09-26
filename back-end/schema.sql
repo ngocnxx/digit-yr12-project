@@ -1,9 +1,6 @@
 -- NCEA Review Navigator — database schema (SQLite)
 -- Data model: users -> subjects -> topics -> reviews
--- Conventions (binding, see CLAUDE.md):
---   * Dates are ISO 'YYYY-MM-DD' strings, set from the server's date.today().
---   * Archive, don't delete: subjects/topics carry `archived` and are filtered out, never removed.
---   * All access is parametrised SQL only (no string interpolation).
+
 
 PRAGMA foreign_keys = ON;
 
@@ -14,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   TEXT    NOT NULL,
     year_level      INTEGER NOT NULL DEFAULT 12,
     onboarding_done INTEGER NOT NULL DEFAULT 0,
+    daily_cap       INTEGER NOT NULL DEFAULT 5,  -- max review suggestions/day (3-8, Sutherland-Paradox loop)
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -23,6 +21,7 @@ CREATE TABLE IF NOT EXISTS subjects (
     name       TEXT    NOT NULL,
     emoji      TEXT,
     colour     TEXT,
+    internal_mode INTEGER NOT NULL DEFAULT 0,  -- 1 = paused during an internal assessment
     archived   INTEGER NOT NULL DEFAULT 0,
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -39,7 +38,6 @@ CREATE TABLE IF NOT EXISTS topics (
     created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
--- Defined now so slice 2 needs no migration. Unused by feature F1.
 CREATE TABLE IF NOT EXISTS reviews (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     topic_id      INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
@@ -47,6 +45,10 @@ CREATE TABLE IF NOT EXISTS reviews (
     confidence    TEXT,                         -- 'shaky' | 'okay' | 'solid' | 'internal_assessment' | NULL
     interval      INTEGER,                      -- days until next_due at log time
     next_due      TEXT,                         -- ISO date
+    evidence      TEXT,                         -- optional accountability note (never affects the schedule)
+    reflection    TEXT,                         -- optional accountability note (never affects the schedule)
+    attachment      TEXT,                       -- optional photo saved as a data URL
+    attachment_name TEXT,                       -- the original file name, for the label
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

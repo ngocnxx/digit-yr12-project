@@ -1,9 +1,10 @@
 // Onboarding screen — 3-step flow: welcome → add subject → add topics.
 
 import { api } from '../api.js';
-import { DEFAULT_TOPIC_EMOJI } from '../config.js';
 import { $, $$, esc, toast, withPending } from '../dom.js';
+import { icon } from '../icons.js';
 import { resetOnboarding, state } from '../state.js';
+import { trace } from '../debug.js';
 import { navigate } from '../router.js';
 
 const ob = state.onboarding;
@@ -46,14 +47,14 @@ function renderObChips() {
   const wrap = $('#ob-topic-chips');
   if (!ob.addedTopics.length) {
     wrap.innerHTML =
-      '<span class="muted small">No topics added yet — you can add them later too.</span>';
+      '<span class="muted small"> You dont have any  topics added yet. But you can add them later too.</span>';
     return;
   }
   wrap.innerHTML = ob.addedTopics
     .map(
       (name, i) =>
         `<span class="topic-chip">${esc(name)}
-           <span class="chip-remove" data-ob-remove="${i}">✕</span>
+           <span class="chip-remove" data-ob-remove="${i}">${icon('x', { size: 13 })}</span>
          </span>`,
     )
     .join('');
@@ -71,24 +72,25 @@ export async function obAddSubject(btn) {
     toast('Pick a subject first');
     return;
   }
-  let name, emoji, colour;
+  // No emoji stored- the dashboard picks a Lucide icon from the subject name
+  // (see icons.js subjectIcon). Options carry data-icon just for documentation.
+  let name, colour;
   if (sel.value === '__custom__') {
     name = $('#ob-custom').value.trim();
     if (!name) {
       toast('Type a subject name');
       return;
     }
-    emoji = '📘';
     colour = undefined;
   } else {
     const opt = sel.selectedOptions[0];
     name = sel.value;
-    emoji = opt.dataset.emoji;
     colour = opt.dataset.colour;
   }
   try {
+    trace('onboarding: obAddSubject → POST /api/subjects', { name });
     const r = await withPending(btn, 'Adding…', () =>
-      api('POST', '/api/subjects', { name, emoji, colour }),
+      api('POST', '/api/subjects', { name, colour }),
     );
     ob.createdSubject = r.subject;
     ob.step = 3;
@@ -112,12 +114,9 @@ export async function obFinish(btn) {
   try {
     await withPending(btn, 'Saving…', async () => {
       if (ob.createdSubject) {
+        trace('onboarding: obFinish → creating', ob.addedTopics.length, 'topics');
         for (const name of ob.addedTopics) {
-          await api('POST', '/api/topics', {
-            subjectId: ob.createdSubject.id,
-            name,
-            emoji: DEFAULT_TOPIC_EMOJI,
-          });
+          await api('POST', '/api/topics', { subjectId: ob.createdSubject.id, name });
         }
       }
       await finishOnboarding();

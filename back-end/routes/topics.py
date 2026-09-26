@@ -1,4 +1,4 @@
-"""Topic routes — create a topic inside one of the user's subjects."""
+"""Topic routes- create a topic inside one of the user's subjects."""
 
 from __future__ import annotations
 

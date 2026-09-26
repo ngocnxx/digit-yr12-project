@@ -1,5 +1,5 @@
 // Central app state. A single mutable object so modules share one source of
-// truth (ES module exports are live bindings — mutate properties, don't reassign).
+// truth (ES module exports are live bindings like mutate properties, don't reassign).
 
 export const state = { //run only once the site first loads up
   currentUser: null, // { id, name, email, yearLevel, onboarding_done }

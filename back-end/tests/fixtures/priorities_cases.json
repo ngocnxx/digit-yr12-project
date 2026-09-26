@@ -1,0 +1,127 @@
+{
+  "_comment": "Golden test vectors for the priority feed. The Python engine (test_scheduling.py) AND the JS mock (front-end/js/schedule.js) must both reproduce these exact outputs, so the two implementations of one algorithm cannot silently drift. today is fixed so results are deterministic.",
+  "cases": [
+    {
+      "name": "empty",
+      "today": "2026-07-15",
+      "dailyCap": 5,
+      "subjects": [],
+      "expected": { "shownIds": [], "overdue": 0, "dueToday": 0, "moreCount": 0 }
+    },
+    {
+      "name": "mixed_overdue_due_new_most_overdue_first",
+      "today": "2026-07-15",
+      "dailyCap": 5,
+      "subjects": [
+        {
+          "id": 1, "name": "Biology", "internalMode": 0,
+          "topics": [
+            { "id": 1, "subjectId": 1, "name": "T1", "reviewCount": 2, "nextDue": "2026-07-10" },
+            { "id": 2, "subjectId": 1, "name": "T2", "reviewCount": 1, "nextDue": "2026-07-15" },
+            { "id": 3, "subjectId": 1, "name": "T3", "reviewCount": 0, "nextDue": null }
+          ]
+        },
+        {
+          "id": 2, "name": "Chemistry", "internalMode": 0,
+          "topics": [
+            { "id": 4, "subjectId": 2, "name": "T4", "reviewCount": 3, "nextDue": "2026-07-13" },
+            { "id": 5, "subjectId": 2, "name": "T5", "reviewCount": 0, "nextDue": null }
+          ]
+        }
+      ],
+      "expected": { "shownIds": [1, 4, 2, 3, 5], "overdue": 2, "dueToday": 1, "moreCount": 0 }
+    },
+    {
+      "name": "cap_limits_feed_and_reports_more",
+      "today": "2026-07-15",
+      "dailyCap": 3,
+      "subjects": [
+        {
+          "id": 1, "name": "Biology", "internalMode": 0,
+          "topics": [
+            { "id": 1, "subjectId": 1, "name": "T1", "reviewCount": 2, "nextDue": "2026-07-05" },
+            { "id": 2, "subjectId": 1, "name": "T2", "reviewCount": 2, "nextDue": "2026-07-08" },
+            { "id": 3, "subjectId": 1, "name": "T3", "reviewCount": 2, "nextDue": "2026-07-12" }
+          ]
+        },
+        {
+          "id": 2, "name": "Chemistry", "internalMode": 0,
+          "topics": [
+            { "id": 4, "subjectId": 2, "name": "T4", "reviewCount": 0, "nextDue": null },
+            { "id": 5, "subjectId": 2, "name": "T5", "reviewCount": 0, "nextDue": null }
+          ]
+        },
+        {
+          "id": 3, "name": "Physics", "internalMode": 0,
+          "topics": [
+            { "id": 6, "subjectId": 3, "name": "T6", "reviewCount": 0, "nextDue": null }
+          ]
+        }
+      ],
+      "expected": { "shownIds": [1, 2, 3], "overdue": 3, "dueToday": 0, "moreCount": 3 }
+    },
+    {
+      "name": "internal_mode_subject_excluded",
+      "today": "2026-07-15",
+      "dailyCap": 5,
+      "subjects": [
+        {
+          "id": 1, "name": "Biology", "internalMode": 1,
+          "topics": [
+            { "id": 1, "subjectId": 1, "name": "T1", "reviewCount": 2, "nextDue": "2026-07-01" }
+          ]
+        },
+        {
+          "id": 2, "name": "Chemistry", "internalMode": 0,
+          "topics": [
+            { "id": 2, "subjectId": 2, "name": "T2", "reviewCount": 1, "nextDue": "2026-07-15" }
+          ]
+        }
+      ],
+      "expected": { "shownIds": [2], "overdue": 0, "dueToday": 1, "moreCount": 0 }
+    },
+    {
+      "name": "new_intro_at_most_one_per_subject",
+      "today": "2026-07-15",
+      "dailyCap": 2,
+      "subjects": [
+        {
+          "id": 1, "name": "Biology", "internalMode": 0,
+          "topics": [
+            { "id": 1, "subjectId": 1, "name": "T1", "reviewCount": 0, "nextDue": null },
+            { "id": 2, "subjectId": 1, "name": "T2", "reviewCount": 0, "nextDue": null }
+          ]
+        },
+        {
+          "id": 2, "name": "Chemistry", "internalMode": 0,
+          "topics": [
+            { "id": 3, "subjectId": 2, "name": "T3", "reviewCount": 0, "nextDue": null }
+          ]
+        },
+        {
+          "id": 3, "name": "Physics", "internalMode": 0,
+          "topics": [
+            { "id": 4, "subjectId": 3, "name": "T4", "reviewCount": 0, "nextDue": null }
+          ]
+        }
+      ],
+      "expected": { "shownIds": [1, 3], "overdue": 0, "dueToday": 0, "moreCount": 2 }
+    },
+    {
+      "name": "one_subject_many_new_shows_only_oldest_even_with_spare_cap",
+      "today": "2026-07-15",
+      "dailyCap": 5,
+      "subjects": [
+        {
+          "id": 1, "name": "Biology", "internalMode": 0,
+          "topics": [
+            { "id": 1, "subjectId": 1, "name": "T1", "reviewCount": 0, "nextDue": null },
+            { "id": 2, "subjectId": 1, "name": "T2", "reviewCount": 0, "nextDue": null },
+            { "id": 3, "subjectId": 1, "name": "T3", "reviewCount": 0, "nextDue": null }
+          ]
+        }
+      ],
+      "expected": { "shownIds": [1], "overdue": 0, "dueToday": 0, "moreCount": 2 }
+    }
+  ]
+}

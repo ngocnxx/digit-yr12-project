@@ -1,12 +1,15 @@
-// Hash router — decides which screen is visible based on auth + onboarding
-// state and the current hash. Runs once on load and again on every hashchange.
+// Router that shows the right screen based on the URL hash and login state.
+
 
 import { api, clearToken, getToken } from './api.js';
 import { $, hide, show, toast } from './dom.js';
 import { state } from './state.js';
+import { trace } from './debug.js'; // debug tracer (on with ?debug=1)
 import { hydrateAuth } from './screens/auth.js';
 import { hydrateOnboarding } from './screens/onboarding.js';
 import { renderDashboard } from './screens/dashboard.js';
+import { renderSubjectDetail } from './screens/subject-detail.js';
+import { renderSettings } from './screens/settings.js';
 
 const SCREENS = [
   'screen-auth',
@@ -29,11 +32,12 @@ export function navigate(hash) {
 }
 
 export async function route() {
-  // Dev trace — shows in DevTools → Console on every route() call. Safe (non-blocking).
-  console.log('[route] running', { hash: location.hash || '#', hasToken: !!getToken() });
+  // Trace what the router is doing each time it runs
+  trace('router: route()', { hash: location.hash || '#', hasToken: !!getToken() });
 
-  // No token → not logged in → show auth.
+  // No token -> not logged in -> show auth.
   if (!getToken()) {
+    trace('router: no token → showing AUTH screen');
     state.currentUser = null;
     hide($('#topbar'));
     showScreen('screen-auth');
@@ -41,32 +45,45 @@ export async function route() {
     return;
   }
 
-  // Have a token but no user object yet → fetch it (token may be expired).
+  // No user info yet, so fetch it from the server
   if (!state.currentUser) {
     try {
       state.currentUser = (await api('GET', '/api/auth/me')).user;
-    } catch {
-      clearToken();
+    } catch (e) {
+      // Server not running (status 0) is not the same as a bad login.
+      // Keep the token so the student stays signed in once the server is back.
+      if (e.status === 0) {
+        trace('router: server is down, keeping the token');
+        hide($('#topbar'));
+        showScreen('screen-auth');
+        hydrateAuth();
+        return;
+      }
+      clearToken(); // the token really was rejected, so sign out
       return route();
     }
   }
 
-  // Logged in but onboarding not finished → onboarding flow.
+  // Still setting up? Send to onboarding
   if (!state.currentUser.onboarding_done) {
+    trace('router: logged in, onboarding not done → ONBOARDING screen');
     hide($('#topbar'));
     showScreen('screen-onboarding');
     hydrateOnboarding();
     return;
   }
+  trace('router: logged in + onboarded → DASHBOARD');
 
-  // Fully logged in — show topbar and route by hash.
+  // Logged in and ready, show the right screen
   show($('#topbar'));
   const hash = location.hash || '#dashboard';
   try {
     if (hash === '#settings') {
       showScreen('screen-settings');
+      await renderSettings();
     } else if (hash.startsWith('#subject-')) {
       showScreen('screen-subject');
+      await renderSubjectDetail(hash.slice('#subject-'.length));
     } else {
       showScreen('screen-dashboard');
       await renderDashboard();

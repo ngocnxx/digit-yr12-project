@@ -1,4 +1,4 @@
-"""User routes — onboarding completion flag."""
+"""User routes- onboarding completion flag."""
 
 from __future__ import annotations
 

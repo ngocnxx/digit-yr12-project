@@ -1,0 +1,10 @@
+# Keep local-only files out of the API image
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+*.db
+*.db-journal
+.DS_Store

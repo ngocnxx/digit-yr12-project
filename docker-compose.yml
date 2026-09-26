@@ -19,7 +19,8 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-dev-insecure-change-me}"
       DATABASE_PATH: "/app/data/navigator.db"
-      CORS_ORIGIN: "${CORS_ORIGIN:-http://127.0.0.1:5500}"
+      # A pattern, so the page works from 127.0.0.1 or localhost (5501 = preview port)
+      CORS_ORIGIN: '${CORS_ORIGIN:-^http://(127\.0\.0\.1|localhost):550[01]$}'
     volumes:
       - db_data:/app/data
 

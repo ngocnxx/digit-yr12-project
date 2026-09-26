@@ -4,14 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCEA Review Navigator</title>
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/screens.css">
+  <link rel="stylesheet" href="style.css">
 
-  <!-- Serve-guard: a CLASSIC (non-module) script so it runs even when the ES
-       module app can't load (e.g. opened via file://). If the app hasn't booted
-       shortly after load, reveal the #serve-hint help card instead of a blank page. -->
+  <!-- Shows a help message if the page is opened as a file instead of a server. -->
   <script>
     window.addEventListener('DOMContentLoaded', function () {
       setTimeout(function () {
@@ -25,35 +20,40 @@
 </head>
 <body>
 
-  <!-- Shown only if the module app never booted (see serve-guard above). -->
+  <!-- Shown only if the module app never booted ( serve-guard above). -->
   <div id="serve-hint" class="serve-hint hidden">
     <div class="serve-hint-card">
       <h2>This page needs to be served</h2>
       <p>The app uses ES modules, which browsers only load over <code>http(s)</code> — not from a
         double-clicked file.</p>
-      <p><strong>Run it:</strong> <code>task web:dev</code>, then open
-        <a href="http://127.0.0.1:5500/">http://127.0.0.1:5500/</a></p>
-      <p class="muted small">No-setup preview: open <code>README/prototype/index.html</code></p>
+      <p><strong>Run it:</strong> <code>python3 -m http.server 5500 --directory front-end</code>,
+        then open <a href="http://127.0.0.1:5500/">http://127.0.0.1:5500/</a></p>
     </div>
   </div>
 
-  <!-- Topbar: hidden until logged in — route() shows/hides it. -->
-  <div id="topbar" class="hidden">
-    <span class="brand">NCEA Review Navigator</span>
-    <button data-action="nav-dashboard">Dashboard</button>
-    <button data-action="do-logout">Log out</button>
+  <!-- Shown when the Flask server is not answering (see main.js checkServer). -->
+  <div id="server-hint" class="serve-hint hidden">
+    <div class="serve-hint-card">
+      <h2>The back-end is not running</h2>
+      <p>This app keeps your subjects and reviews on a small Flask server. Start it in a second
+        terminal, then reload this page.</p>
+      <p><strong>Start it:</strong> <code>cd back-end &amp;&amp; python app.py</code></p>
+      <p class="muted small">It should say: Running on http://127.0.0.1:5050</p>
+      <p class="muted small">On GitHub Codespaces, start it with
+        <code>python3 -m flask run --host=0.0.0.0 --port=5050</code>, then open the Ports tab
+        and set port 5050 visibility to <strong>Public</strong>.</p>
+    </div>
   </div>
 
-  <!-- ===================================================================
-       SCREEN: Auth — login + create-account (the logged-out default).
-       Shown by router.js when there is no token; hidden otherwise.
-       Behaviour is attached via data-action hooks only (no inline JS):
-         auth-tab  → switch login/signup tab   (screens/auth.js setAuthMode)
-         do-login  → submit the login form      (screens/auth.js doLogin)
-         do-signup → submit the signup form      (screens/auth.js doSignup)
-       #auth-login is visible by default; #auth-signup starts .hidden and is
-       revealed by the "Create account" tab. Design: docs/design/auth-screen.md
-       =================================================================== -->
+  <!-- Topbar, only shown after login. -->
+  <div id="topbar" class="hidden">
+    <span class="brand" data-action="nav-dashboard" role="button" tabindex="0">NCEA Review Navigator</span>
+    <button data-action="nav-dashboard"><span data-icon="layout-dashboard" data-icon-size="16"></span> Dashboard</button>
+    <button data-action="nav-settings"><span data-icon="settings" data-icon-size="16"></span> Settings</button>
+    <button data-action="do-logout"><span data-icon="log-out" data-icon-size="16"></span> Log out</button>
+  </div>
+
+  <!-- Screen: Auth, login and sign up. -->
   <section id="screen-auth" class="screen hidden">
     <div class="auth-bg">             <!-- full-height gradient backdrop, centers the card -->
       <div class="auth-card">
@@ -84,7 +84,7 @@
           <button class="btn btn-primary btn-block btn-lg" data-action="do-login">Sign in</button>
         </div>
 
-        <!-- Signup form — hidden until the tab switches -->
+        <!-- Signup form, hidden until the tab changes -->
         <div id="auth-signup" class="auth-form hidden">
           <div class="field">
             <label for="signup-name">Full name</label>
@@ -131,9 +131,9 @@
 
         <!-- Step 1: Welcome -->
         <div id="ob-step-1" class="ob-step">
-          <div class="ob-icon">👋</div>
+          <div class="ob-icon" data-icon="hand" data-icon-size="40"></div>
           <h2>Welcome to NCEA Review Navigator</h2>
-          <p class="ob-desc">This app uses spaced repetition to help you revise smarter — it schedules each topic at exactly the right time so it sticks in long-term memory.</p>
+          <p class="ob-desc">This dashboard uses spaced repetition to help you revise smarter (to prevent cramming)! It schedules each topic repeatedly at an amount of time so it sticks in your long-term memory until the EOY external.</p>
           <p class="ob-desc">Let's set up your first subject to get started.</p>
           <div class="ob-actions">
             <button class="btn btn-primary btn-lg" data-action="ob-next">Get started →</button>
@@ -143,22 +143,22 @@
 
         <!-- Step 2: Pick a subject -->
         <div id="ob-step-2" class="ob-step hidden">
-          <div class="ob-icon">📚</div>
+          <div class="ob-icon" data-icon="book-open" data-icon-size="40"></div>
           <h2>Add your first subject</h2>
           <p class="ob-desc">Pick one of the common NCEA subjects below, or type your own.</p>
           <div class="field">
             <label for="ob-subj-select">Subject</label>
             <select class="input select-input" id="ob-subj-select">
               <option value="">— Choose a subject —</option>
-              <option value="English" data-emoji="✏️" data-colour="#3B82F6">English</option>
-              <option value="Mathematics" data-emoji="📐" data-colour="#8B5CF6">Mathematics</option>
-              <option value="Biology" data-emoji="🧬" data-colour="#10B981">Biology</option>
-              <option value="Chemistry" data-emoji="⚗️" data-colour="#F59E0B">Chemistry</option>
-              <option value="Physics" data-emoji="⚡" data-colour="#EF4444">Physics</option>
-              <option value="History" data-emoji="🏛️" data-colour="#6B7280">History</option>
-              <option value="Geography" data-emoji="🌍" data-colour="#059669">Geography</option>
-              <option value="Economics" data-emoji="📊" data-colour="#2563EB">Economics</option>
-              <option value="__custom__" data-emoji="📘">Other (type your own)</option>
+              <option value="English" data-icon="notebook-pen">English</option>
+              <option value="Mathematics" data-icon="calculator">Mathematics</option>
+              <option value="Biology" data-icon="dna">Biology</option>
+              <option value="Chemistry" data-icon="flask-conical">Chemistry</option>
+              <option value="Physics" data-icon="atom">Physics</option>
+              <option value="History" data-icon="landmark">History</option>
+              <option value="Geography" data-icon="globe">Geography</option>
+              <option value="Economics" data-icon="trending-up">Economics</option>
+              <option value="__custom__" data-icon="book">Other (type your own)</option>
             </select>
           </div>
           <div id="ob-custom-field" class="field hidden">
@@ -172,16 +172,16 @@
 
         <!-- Step 3: Add topics -->
         <div id="ob-step-3" class="ob-step hidden">
-          <div class="ob-icon">🌱</div>
+          <div class="ob-icon" data-icon="sprout" data-icon-size="40"></div>
           <h2>Add topics for <span id="ob-subject-name">your subject</span></h2>
-          <p class="ob-desc">Topics are the specific things you revise — standards, chapters, concepts. Add as many as you like now, or skip and add them later.</p>
+          <p class="ob-desc">Topics are the specific things you revise like standards, chapters, concepts. Add as many as you like now, or you can skip and add them later.</p>
           <div class="field ob-topic-row">
             <input class="input" id="ob-topic-input" placeholder="e.g. Photosynthesis, Organic compounds…">
             <button class="btn btn-primary" data-action="ob-add-topic">Add</button>
           </div>
           <div id="ob-topic-chips" class="topic-chips"></div>
           <div class="ob-actions">
-            <button class="btn btn-primary btn-lg" data-action="ob-finish">Finish setup →</button>
+            <button class="btn btn-primary btn-lg" data-action="ob-finish">Finish setup -></button>
             <button class="btn btn-ghost" data-action="ob-skip">Skip for now</button>
           </div>
         </div>
@@ -190,13 +190,18 @@
     </div>
   </section>
 
-  <!-- Screens filled in by JS. Dashboard is the F1 placeholder; the others are slice-2 stubs. -->
+  <!-- Dashboard, subject detail, and settings screens are filled in by JS. -->
   <section id="screen-dashboard" class="screen hidden"></section>
   <section id="screen-subject"   class="screen hidden"></section>
   <section id="screen-settings"  class="screen hidden"></section>
 
   <div id="modal-overlay" class="modal-overlay"></div>
   <div id="toast" class="toast"></div>
+
+  <!-- Icon attribution, required by the Lucide licence -->
+  <footer class="app-footer">
+    Icons by <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer">Lucide</a>, ISC Licence.
+  </footer>
 
   <script type="module" src="js/main.js"></script>
 </body>

@@ -221,7 +221,48 @@ never sees a blank screen or a raw stack trace.
 
 ---
 
-## 11. Extension points
+## 11. End-to-end debugging (trace instrumentation)
+
+The whole auth chain is instrumented with a **toggleable tracer**. It's OFF by default
+(no console noise); turn it ON by opening the app with **`?debug=1`**:
+
+```
+http://127.0.0.1:5500/?debug=1
+```
+
+`trace(...)` (in `js/debug.js`) is just `console.log` gated by that flag. Watch DevTools →
+Console and you'll see the flow, in order, as a blue **[trace]** badge:
+
+```
+main: click → do-login            ← main.js delegated click handler
+auth: doLogin() start             ← screens/auth.js
+auth: doLogin → POST /api/auth/login {email}
+api: POST /api/auth/login → MOCK backend    ← api.js
+mock: handling POST /api/auth/login          ← api.mock.js
+api: POST /api/auth/login ← OK (mock)
+auth: doLogin OK ← user:{…} → setToken + go #dashboard
+router: route() {hash:'#dashboard', hasToken:true}
+router: logged in + onboarded → DASHBOARD
+```
+
+**Trace map (where each log lives):**
+
+| Layer | File | What it traces |
+|---|---|---|
+| click dispatch | `js/main.js` | which `data-action` fired |
+| screen logic | `js/screens/auth.js` | `setAuthMode`, `doLogin`/`doSignup` start · validation · OK/FAIL |
+| transport | `js/api.js` | request (mock vs real) + response/error |
+| mock backend | `js/api.mock.js` | which mock route handled the call |
+| router | `js/router.js` | route inputs + which screen it shows |
+| **server** | `back-end/routes/auth.py` | `print("[trace] …")` for login/signup/me — shows in the **`task api:dev` terminal** (only when you use `?real=1`) |
+
+- The **password is never logged** anywhere (client or server).
+- An `alert()` example sits commented-out in `doLogin` — a "freeze-and-look" probe. Never leave
+  `alert` active in render/route code: it blocks the whole page.
+- In the generated **prototype** (`README/prototype/app.js`), all traces are shipped **commented out**
+  (inactive) by `build-prototype.py` — visible for reference, zero console noise for reviewers.
+
+## 12. Extension points
 
 - **Forgot password / email verification** — new endpoints + a third tab/screen; routing already
   centralises the "no valid session" path.

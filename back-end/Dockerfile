@@ -7,8 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install deps first for better layer caching.
+# gunicorn is only needed to serve the app inside Docker, so it is installed
+# here rather than added to requirements.txt (which matches the submitted code).
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt "gunicorn>=23,<24"
 
 COPY . .
 

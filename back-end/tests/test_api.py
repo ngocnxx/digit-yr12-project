@@ -1,4 +1,4 @@
-"""API tests for feature F1 — auth, onboarding, subjects, topics (happy + failure)."""
+"""API tests for feature: auth, onboarding, subjects, topics (happy + failure)."""
 
 from __future__ import annotations
 
@@ -156,3 +156,118 @@ def test_subjects_are_scoped_per_user(client, auth_headers):
         "/api/subjects", headers={"Authorization": f"Bearer {other['token']}"}
     ).get_json()["subjects"]
     assert listing == []
+
+
+# --- scheduling: log-review, priorities, settings, assessment ---------------
+
+
+def _seed_topic(client, auth_headers, subject="Biology", topic="Photosynthesis"):
+    """Create a subject + topic, return their ids (used by the scheduling tests)."""
+    sid = client.post("/api/subjects", json={"name": subject}, headers=auth_headers).get_json()[
+        "subject"
+    ]["id"]
+    tid = client.post(
+        "/api/topics", json={"subjectId": sid, "name": topic}, headers=auth_headers
+    ).get_json()["topic"]["id"]
+    return sid, tid
+
+
+def test_log_review_advances_schedule(client, auth_headers):
+    _sid, tid = _seed_topic(client, auth_headers)
+    res = client.post("/api/log-review", json={"topicId": tid}, headers=auth_headers)
+    assert res.status_code == 201
+    body = res.get_json()
+    # First review -> reviewCount 1, next_due = today + 1 day (set by the SERVER).
+    assert body["topic"]["reviewCount"] == 1
+    assert body["review"]["interval"] == 1
+    assert body["review"]["nextDue"] == body["topic"]["nextDue"]
+
+
+def test_log_review_stores_optional_fields_without_affecting_schedule(client, auth_headers):
+    _sid, tid = _seed_topic(client, auth_headers)
+    plain = client.post("/api/log-review", json={"topicId": tid}, headers=auth_headers).get_json()
+
+    _sid2, tid2 = _seed_topic(client, auth_headers, subject="Chemistry", topic="Acids")
+    rich = client.post(
+        "/api/log-review",
+        json={"topicId": tid2, "confidence": "shaky", "evidence": "did q3", "reflection": "tricky"},
+        headers=auth_headers,
+    ).get_json()
+
+    # Confidence/evidence/reflection are stored but the interval is identical.
+    assert rich["review"]["confidence"] == "shaky"
+    assert rich["review"]["evidence"] == "did q3"
+    assert rich["review"]["interval"] == plain["review"]["interval"]
+
+
+def test_log_review_foreign_topic_is_404(client, auth_headers):
+    other = client.post(
+        "/api/auth/signup",
+        json={"name": "B", "email": "foe@example.com", "password": "secret"},
+    ).get_json()
+    _sid, tid = _seed_topic(
+        client,
+        {"Authorization": f"Bearer {other['token']}"},
+        subject="Physics",
+        topic="Mechanics",
+    )
+    res = client.post("/api/log-review", json={"topicId": tid}, headers=auth_headers)
+    assert res.status_code == 404
+
+
+def test_log_review_requires_auth(client):
+    assert client.post("/api/log-review", json={"topicId": 1}).status_code == 401
+
+
+def test_priorities_shape_and_cap(client, auth_headers):
+    # Set a tiny cap, then create more due topics than the cap.
+    client.put("/api/settings", json={"dailyCap": 3}, headers=auth_headers)
+    sid = client.post("/api/subjects", json={"name": "Biology"}, headers=auth_headers).get_json()[
+        "subject"
+    ]["id"]
+    for i in range(5):
+        tid = client.post(
+            "/api/topics", json={"subjectId": sid, "name": f"T{i}"}, headers=auth_headers
+        ).get_json()["topic"]["id"]
+        client.post("/api/log-review", json={"topicId": tid}, headers=auth_headers)
+
+    feed = client.get("/api/priorities", headers=auth_headers).get_json()
+    assert len(feed["shown"]) <= 3
+    for key in ("shown", "moreCount", "overdue", "dueToday", "coverage", "reviewedCount", "totalTopics"):
+        assert key in feed
+    assert feed["totalTopics"] == 5
+
+
+def test_settings_clamps_and_echoes_in_user(client, auth_headers):
+    res = client.put("/api/settings", json={"dailyCap": 99}, headers=auth_headers)
+    assert res.status_code == 200
+    assert res.get_json()["dailyCap"] == 8  # clamped to the max
+    me = client.get("/api/auth/me", headers=auth_headers).get_json()
+    assert me["user"]["dailyCap"] == 8
+
+
+def test_assessment_mode_excludes_then_catches_up(client, auth_headers):
+    sid, tid = _seed_topic(client, auth_headers)
+
+    # Start: the subject is paused -> its (new) topic is excluded from priorities.
+    client.post("/api/assessment-mode-start", json={"subjectId": sid}, headers=auth_headers)
+    feed = client.get("/api/priorities", headers=auth_headers).get_json()
+    assert all(item["subjectId"] != sid for item in feed["shown"])
+
+    # End: topics are caught up to review_count >= 3.
+    res = client.post("/api/assessment-mode-end", json={"subjectId": sid}, headers=auth_headers)
+    assert res.status_code == 200
+    subjects = client.get("/api/subjects", headers=auth_headers).get_json()["subjects"]
+    topic = subjects[0]["topics"][0]
+    assert topic["reviewCount"] >= 3
+    assert subjects[0]["internalMode"] == 0
+
+
+def test_subjects_include_server_status_and_coverage(client, auth_headers):
+    _sid, tid = _seed_topic(client, auth_headers)
+    client.post("/api/log-review", json={"topicId": tid}, headers=auth_headers)
+    subject = client.get("/api/subjects", headers=auth_headers).get_json()["subjects"][0]
+    assert subject["coverage"] == 100
+    topic = subject["topics"][0]
+    assert "status" in topic and "statusLabel" in topic
+    assert len(topic["reviews"]) == 1
