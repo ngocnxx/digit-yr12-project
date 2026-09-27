@@ -1,35 +1,170 @@
-# DOCKER tasks — the full stack (frontend + backend + database) in containers.
-# SCALE-UP path: for day-to-day dev prefer local (task web:dev / api:dev). Use
-# these for parity, deployment, or scaling. Invoked as `task docker:<name>`.
+# DOCKER tasks — the default way to run the app: web + api + database in containers.
+# The same commands work on a Mac (Docker Desktop), in the devcontainer and in
+# GitHub Codespaces. Invoked as `task docker:<name>`; the everyday ones also have
+# short names in the root Taskfile (task up, task test, task verify, ...).
 version: "3"
 
 vars:
   API_PORT: '{{.API_PORT | default "5050"}}'
   WEB_PORT: '{{.WEB_PORT | default "5500"}}'
+  EDGE_PORT: '{{.EDGE_PORT | default "8080"}}'
+  RUFF_IMAGE: ghcr.io/astral-sh/ruff:0.15.20
+
+# Passed to docker compose and the smoke scripts, so a port change in .env
+# (or on the command line, e.g. `task up WEB_PORT=5501`) reaches everything.
+env:
+  API_PORT: "{{.API_PORT}}"
+  WEB_PORT: "{{.WEB_PORT}}"
+  EDGE_PORT: "{{.EDGE_PORT}}"
 
 tasks:
+  setup:
+    desc: "One-time setup — check Docker, create .env from .env.example, build the images"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - task: wait-docker
+      - '[ -f .env ] || { cp .env.example .env && echo "Created .env from .env.example"; }'
+      - docker compose build
+
+  wait-docker:
+    internal: true
+    silent: true
+    # Docker-in-Docker (devcontainer, Codespaces) can take a few seconds to start
+    cmd: |
+      for i in $(seq 1 60); do
+        docker info >/dev/null 2>&1 && break
+        [ "$i" = 1 ] && echo "Waiting for Docker to start..."
+        sleep 1
+      done
+      docker info >/dev/null 2>&1 || { echo "Docker is not running. Start Docker Desktop and try again." >&2; exit 1; }
+      docker compose version >/dev/null 2>&1 || { echo "Docker Compose v2 is missing (docker compose ...)." >&2; exit 1; }
+
+  dev:
+    desc: "Run the stack in the foreground with live sync — page edits need only a reload, API edits restart gunicorn (Ctrl+C stops)"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - task: wait-docker
+      - task: urls
+      - docker compose up --build --watch
+
   up:
-    desc: "Run the FULL stack — web + api + db (build + run, web:{{.WEB_PORT}} api:{{.API_PORT}})"
-    cmd: cd {{.ROOT_DIR}} && API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} docker compose up --build
+    desc: "Build and start web + api in the background, wait until both are healthy, print the addresses"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - task: wait-docker
+      - docker compose up --build --detach --wait --wait-timeout 180
+      - task: urls
 
   down:
-    desc: "Stop the stack and remove containers"
-    cmd: cd {{.ROOT_DIR}} && docker compose down
+    desc: "Stop and remove the containers (the database volume is kept)"
+    dir: "{{.ROOT_DIR}}"
+    cmd: docker compose down
 
-  rebuild:
-    desc: "Rebuild images from scratch and restart the stack"
+  restart:
+    desc: "Restart web + api and wait until both are healthy"
+    dir: "{{.ROOT_DIR}}"
     cmds:
-      - cd {{.ROOT_DIR}} && docker compose down
-      - cd {{.ROOT_DIR}} && API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} docker compose up --build
+      - docker compose restart
+      - docker compose up --detach --wait --wait-timeout 180
 
   logs:
-    desc: "Tail container logs"
-    cmd: cd {{.ROOT_DIR}} && docker compose logs -f
+    desc: "Follow container logs (e.g. `task logs -- api`)"
+    dir: "{{.ROOT_DIR}}"
+    cmd: docker compose logs --follow --tail 100 {{.CLI_ARGS}}
 
   ps:
-    desc: "Show running services"
-    cmd: cd {{.ROOT_DIR}} && docker compose ps
+    desc: "Show the containers and their health"
+    dir: "{{.ROOT_DIR}}"
+    cmd: docker compose ps
+
+  urls:
+    desc: "Print the app's addresses (Codespaces-aware)"
+    silent: true
+    cmd: |
+      if [ -n "${CODESPACE_NAME:-}" ]; then
+        domain="${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
+        web="https://${CODESPACE_NAME}-{{.WEB_PORT}}.${domain}"
+        edge="https://${CODESPACE_NAME}-{{.EDGE_PORT}}.${domain}"
+        api="https://${CODESPACE_NAME}-{{.API_PORT}}.${domain}"
+      else
+        web="http://127.0.0.1:{{.WEB_PORT}}"
+        edge="http://127.0.0.1:{{.EDGE_PORT}}"
+        api="http://127.0.0.1:{{.API_PORT}}"
+      fi
+      echo ""
+      echo "  App (open this)   $web/"
+      echo "  Edge, like AWS    $edge/   one address, /api/* forwarded, production CSP"
+      echo "  API health        $api/api/health"
+      echo ""
+
+  open:
+    desc: "Open the app in your browser"
+    silent: true
+    cmd: |
+      if [ -n "${CODESPACE_NAME:-}" ]; then
+        url="https://${CODESPACE_NAME}-{{.WEB_PORT}}.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}/"
+      else
+        url="http://127.0.0.1:{{.WEB_PORT}}/"
+      fi
+      if [ "$(uname)" = Darwin ]; then open "$url"
+      elif [ -n "${BROWSER:-}" ]; then "$BROWSER" "$url"
+      else echo "Open $url"; fi
 
   test:
-    desc: "Run the backend tests inside the container (parity with `task test`)"
-    cmd: cd {{.ROOT_DIR}} && docker compose run --rm api pytest
+    desc: "Run the backend tests (pytest) inside the API image — engine, API, cloud and S3 mode"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - docker compose build api
+      - docker compose run --rm --no-deps -T api pytest -p no:cacheprovider {{.CLI_ARGS}}
+
+  image:
+    desc: "Check the API image is ready for AWS Lambda (Web Adapter, non-root, no data baked in, fails closed)"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - docker compose build api
+      - ./scripts/check-image.sh
+
+  smoke:
+    desc: "HTTP smoke tests against the running stack — API flow, page, edge, CORS (needs `task up`)"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - API_BASE=http://127.0.0.1:{{.API_PORT}} ./scripts/smoke.sh
+      - ./scripts/smoke-web.sh
+
+  smoke:s3:
+    desc: "Database-in-S3 mode, like Lambda — two API copies share one database in a local fake S3"
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - task: wait-docker
+      - docker compose --profile s3 up --build --detach s3 s3-init api-s3a api-s3b
+      - defer: docker compose --profile s3 rm --stop --force s3 s3-init api-s3a api-s3b
+      - ./scripts/smoke-s3.sh
+
+  verify:
+    desc: "⭐ Definition of Done — build, start, tests, image check, smoke tests, S3 mode (all must pass)"
+    cmds:
+      - task: setup
+      - task: up
+      - task: test
+      - task: image
+      - task: smoke
+      - task: smoke:s3
+      - cmd: |
+          echo ""
+          echo "✅ All automated checks passed. The stack is still running."
+          echo "   Finish with the browser check (sign up → onboarding → add subject/topic →"
+          echo "   log a review → next due date → reload → log out; console free of errors):"
+        silent: true
+      - task: urls
+
+  lint:
+    desc: "Advisory lint (ruff check, read-only, in a container) — not part of the gate, the submitted code stays as-is"
+    dir: "{{.ROOT_DIR}}"
+    ignore_error: true
+    cmd: docker run --rm -v "{{.ROOT_DIR}}/back-end:/src" -w /src {{.RUFF_IMAGE}} check --no-cache .
+
+  reset:
+    desc: "Delete the Docker database (every account and review) and stop the stack"
+    dir: "{{.ROOT_DIR}}"
+    prompt: "This deletes every account and review in the Docker database volume. Continue?"
+    cmd: docker compose --profile s3 down --volumes --remove-orphans

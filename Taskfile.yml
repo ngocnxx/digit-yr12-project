@@ -1,33 +1,32 @@
 # NCEA Review Navigator — task runner (https://taskfile.dev)
 # Install: brew install go-task     ·     List everything: task --list  (or just: task)
 #
-# PHILOSOPHY: start small LOCAL (this Mac), scale to Docker LATER.
-# Day-to-day dev is plain local Python + static HTML/CSS/JS — no containers, no
-# daemon, fastest feedback. Docker (docker:*) is the same app in containers, kept
-# ready for parity / deployment / scaling, but it is NOT needed for development.
+# DOCKER FIRST. The app runs as containers — the same on this Mac (Docker
+# Desktop), in the devcontainer and in GitHub Codespaces — and the API image is
+# the one AWS Lambda runs.
 #
-# ── Getting started (local, macOS — start here) ───────────────────────────
-#   task setup       # one-time: venv + backend deps + create the database
-#   task dev         # ⭐ front-end dev in the browser (local, mock — no Flask/DB)
-#   task test        # ⭐ local quality gate: lint + tests
-#   task api:dev     # backend API (separate terminal), only when you need it
-# ── Same thing in Docker (parity, for scaling/deployment) ──────────────────
-#   task docker:up   # run the whole stack (web + api + db) in containers
-#   task docker:test # run the backend tests inside the container
+# ── Everyday (Docker) ────────────────────────────────────────────────────
+#   task setup    # one-time: check Docker, create .env, build the images
+#   task up       # start web + api, wait until healthy → http://127.0.0.1:5500
+#   task dev      # same, in the foreground, with live sync of your edits
+#   task test     # backend tests (pytest) inside the API image
+#   task verify   # ⭐ Definition of Done: tests + image check + smoke tests + S3 mode
+#   task down     # stop (data kept)          task reset  # wipe the Docker database
 #
-# DEFAULT IS LOCAL. The short `dev`/`test` always mean your Mac; `docker:*` is
-# the mirrored container path. Tasks are isolated by tier:
-#   web:*  FRONTEND  ·  api:*  BACKEND  ·  db:*  DATABASE  ·  docker:*  FULL STACK
-# Override ports inline, e.g.  task api:dev API_PORT=5055
+# ── Host mode (no Docker, optional) ──────────────────────────────────────
+#   web:*  the page with python3 -m http.server  ·  api:*  Flask dev server + venv
+#   db:*   the host SQLite file back-end/navigator.db
+#
+# Ports come from .env (see .env.example) or the command line:  task up WEB_PORT=5501
 version: "3"
 
+dotenv: [".env"]
+
 includes:
-  # Local tiers first — the everyday path.
+  docker: ./taskfiles/docker.yml
   web: ./taskfiles/web.yml
   api: ./taskfiles/api.yml
   db: ./taskfiles/db.yml
-  # Scale-up path — same app, in containers.
-  docker: ./taskfiles/docker.yml
 
 tasks:
   default:
@@ -35,25 +34,73 @@ tasks:
     cmds: [task --list]
     silent: true
 
-  # ── Local-first shortcuts (default = your Mac) ─────────────────────────
+  # ── Docker-first shortcuts (each one is docker:<name>) ─────────────────
+  setup:
+    desc: "One-time setup — check Docker, create .env, build the images"
+    cmds: [task: docker:setup]
+
+  up:
+    desc: "⭐ Start the app (web + api), wait until healthy, print the addresses"
+    cmds: [task: docker:up]
+
   dev:
-    desc: "⭐ Local front-end dev on this Mac (mock backend — no Flask/DB). → http://127.0.0.1:5500"
-    cmds:
-      - task: web:dev
+    desc: "Start the app in the foreground with live sync of your edits (Ctrl+C stops)"
+    cmds: [task: docker:dev]
+
+  down:
+    desc: "Stop the app (the database is kept)"
+    cmds: [task: docker:down]
+
+  restart:
+    desc: "Restart the app and wait until healthy"
+    cmds: [task: docker:restart]
+
+  logs:
+    desc: "Follow the logs (e.g. `task logs -- api`)"
+    cmds: [task: docker:logs]
+
+  ps:
+    desc: "Show the containers and their health"
+    cmds: [task: docker:ps]
+
+  urls:
+    desc: "Print the app's addresses"
+    cmds: [task: docker:urls]
+
+  open:
+    desc: "Open the app in your browser"
+    cmds: [task: docker:open]
 
   test:
-    desc: "⭐ Local quality gate — lint + backend tests (the everyday `test`)"
-    cmds:
-      - task: api:check
+    desc: "⭐ Backend tests (pytest) inside the API image"
+    cmds: [task: docker:test]
 
-  setup:
-    desc: "LOCAL one-time bootstrap — venv + backend deps + create the database"
-    cmds:
-      - task: api:install
-      - task: db:init
+  smoke:
+    desc: "HTTP smoke tests against the running app"
+    cmds: [task: docker:smoke]
+
+  smoke:s3:
+    desc: "Smoke test the database-in-S3 mode (like Lambda)"
+    cmds: [task: "docker:smoke:s3"]
+
+  image:
+    desc: "Check the API image is ready for AWS Lambda"
+    cmds: [task: docker:image]
+
+  verify:
+    desc: "⭐ Definition of Done — everything automated must pass"
+    cmds: [task: docker:verify]
+
+  lint:
+    desc: "Advisory lint (ruff check, read-only) — not part of the gate"
+    cmds: [task: docker:lint]
+
+  reset:
+    desc: "Delete the Docker database (asks first)"
+    cmds: [task: docker:reset]
 
   clean:
-    desc: "Remove venv, caches, and local dev databases"
+    desc: "Host mode: remove the venv, caches and host database files (Docker data is not touched)"
     cmds:
       - rm -rf back-end/.venv back-end/.pytest_cache back-end/.ruff_cache
       - find . -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true

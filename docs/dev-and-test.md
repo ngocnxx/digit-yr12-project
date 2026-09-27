@@ -30,43 +30,32 @@ fast, isolated checks at the bottom; fewer, slower, full-stack checks at the top
 ## Quick reference (`task`)
 
 Task runner: [Taskfile.yml](../Taskfile.yml) (install: `brew install go-task`). Run `task` to list all.
-Tasks are **namespaced by tier** — `web:*` frontend, `api:*` backend, `db:*` database, `docker:*` full stack.
 
-**Default is LOCAL (this Mac). The short `dev`/`test` mean your Mac; `docker:*` is the mirrored
-container path for scaling/deployment.**
+**Docker first.** The short tasks run the containers: the same on this Mac (Docker Desktop), in the
+devcontainer and in Codespaces. Host mode (no Docker) stays under `web:*`, `api:*`, `db:*`.
 
 ```bash
-task setup     # one-time LOCAL bootstrap: venv + deps + database
-task dev       # ⭐ front-end dev in the browser (local, mock — no Flask/DB) → :5500
-task test      # ⭐ local quality gate: lint + backend tests
-task api:dev   # backend API (separate terminal), only when you need the real API
-
-# Same thing in Docker (parity):
-task docker:up    # run the whole stack (web + api + db) in containers
-task docker:test  # run the backend tests inside the container
+task setup     # one-time: check Docker, create .env, build the images
+task up        # ⭐ start web + api, wait until healthy, print the addresses
+task dev       # same stack in the foreground, live sync of your edits (Ctrl+C stops)
+task test      # ⭐ backend tests (pytest) inside the API image
+task smoke     # HTTP smoke tests against the running stack (API flow, page, edge, CORS)
+task smoke:s3  # database-in-S3 mode (two API copies + a local fake S3)
+task image     # the API image is Lambda-ready
+task verify    # ⭐ Definition of Done: setup + up + test + image + smoke + smoke:s3
+task logs      # follow logs (task logs -- api)     task ps   # health
+task down      # stop (data kept)                   task reset  # wipe the Docker database
+task lint      # advisory ruff check (not in the gate: the submitted code stays as written)
 ```
 
 ```bash
-# web (frontend)
-task web:dev         # serve the SPA → :5500 (mock by default; ?real=1 to use the API)
-task web:prototype   # build the standalone 3-file mockup (README/prototype/)
-task web:open        # serve the SPA AND open it in your browser (live dev server)
-
-# api (backend)
-task api:install     # venv + deps
-task api:dev         # run the Flask API → :5050
-task api:test        # pytest
-task api:lint        # ruff check
-task api:check       # lint + tests (local gate)
+# host mode (no Docker)
+task api:setup       # venv + deps + back-end/navigator.db
+task api:dev         # Flask dev server → :5050
+task web:dev         # the page → :5500 (calls the API on :5050)
+task api:test        # pytest in the venv
 task api:smoke       # HTTP smoke test against a running API
-
-# db (database)
-task db:init         # create the SQLite DB from schema.sql
-task db:reset        # wipe + recreate
-task db:shell        # open a sqlite3 shell
-
-# docker (scale-up: the whole stack in containers — optional for dev)
-task docker:up       # docker compose up --build
+task db:reset        # wipe + recreate back-end/navigator.db
 ```
 
 ---
@@ -155,23 +144,26 @@ the live Flask API instead of the mock) and walk the journey, or drive it with a
 
 ---
 
-## Docker (parity with CI + the devcontainer)
+## Docker (the default)
 
-One command brings up both services (web = nginx, api = Flask + gunicorn, SQLite on a volume):
+One command brings up both services (web = nginx, api = Flask + gunicorn, SQLite on a volume) and
+waits until both are healthy:
 
 ```bash
-task docker:up                       # docker compose up --build
-# web → http://127.0.0.1:5500   api → http://127.0.0.1:5050
-task api:smoke                    # level 2/3 smoke against the running stack
-task docker:down                     # stop + remove
+task up
+# page → http://127.0.0.1:5500   edge (like AWS) → http://127.0.0.1:8080   api → http://127.0.0.1:5050
+task verify                          # everything automated must pass
+task down                            # stop (data kept)
 ```
 
-- **Level 1 (front-end only) in Docker:** `docker compose up --build web`, then open
-  `http://127.0.0.1:5500/` (the SPA container alone — mock by default, no api needed).
-- **Level 1 (back-end only) in Docker:** `docker compose run --rm api pytest`.
-- **Devcontainer:** "Reopen in Container" uses an image-based Python 3.13 environment (decoupled
-  from the runtime stack); `postCreateCommand` installs deps and initialises the DB. Inside it,
-  use `task web:dev` / `task api:dev`; run the full container stack from the host with `task docker:up`.
+- **Level 1 (back-end only) in Docker:** `task test` (pytest inside the API image).
+- **Level 2 (contract + CORS + nginx):** `task smoke` runs `scripts/smoke.sh` and `scripts/smoke-web.sh`.
+- **Edge :8080:** the same nginx, shaped like CloudFront: one origin, `/api/*` forwarded, 403 for a
+  missing file, and the production CSP (script hash computed from `index.html` at build). Use it to
+  prove the app runs under the production headers before deploying.
+- **Devcontainer / Codespaces:** Python 3.13 + Docker-in-Docker + Task. `postCreateCommand` runs
+  `task setup`; then `task up` / `task verify` exactly as on the Mac. In Codespaces the page calls
+  `/api/*` on its own address (nginx forwards it), so the forwarded ports stay private.
 
 ---
 

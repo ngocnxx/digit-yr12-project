@@ -1,4 +1,5 @@
-# DATABASE tasks — the SQLite file (back-end/navigator.db).
+# DATABASE tasks, HOST MODE — the host SQLite file (back-end/navigator.db).
+# The Docker database lives in the db_data volume instead (task reset wipes it).
 # Invoked as `task db:<name>` from the repo root.
 version: "3"
 
@@ -8,15 +9,15 @@ vars:
 
 tasks:
   init:
-    desc: "Create the SQLite database from schema.sql (safe to re-run)"
+    desc: "Host mode: create back-end/navigator.db from schema.sql (safe to re-run)"
     cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/python -c "import db; db.init_db()"
 
   reset:
-    desc: "Wipe and recreate the database (deletes all local data)"
+    desc: "Host mode: wipe and recreate back-end/navigator.db"
     cmds:
       - rm -f {{.DB}}
       - cd {{.ROOT_DIR}}/back-end && {{.VENV}}/python -c "import db; db.init_db()"
 
   shell:
-    desc: "Open an interactive sqlite3 shell on the database"
+    desc: "Host mode: sqlite3 shell on back-end/navigator.db"
     cmd: sqlite3 {{.DB}}

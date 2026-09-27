@@ -1,20 +1,35 @@
 {
   "name": "NCEA Review Navigator",
-  // Image-based dev environment (Python 3.13). The repo is auto-mounted at
-  // /workspaces/<repo>. The full app stack still runs via `task up` /
-  // `docker compose up` — this container is just a consistent dev shell.
+  // Python 3.13 dev shell with its own Docker engine (Docker-in-Docker) and Task,
+  // so the full stack runs here exactly as on a Mac:  task up  ·  task verify
+  // Works the same in VS Code "Reopen in Container" and in GitHub Codespaces.
   "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  "features": {
+    // moby: false = Docker CE packages. The python:3.13 image is Debian trixie,
+    // which has no moby packages, so the default install fails there.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": { "moby": false },
+    "ghcr.io/devcontainers-extra/features/go-task:1": {}
+  },
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "charliermarsh.ruff"],
       "settings": {
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",
-          "editor.formatOnSave": true
+          "editor.formatOnSave": false
         }
       }
     }
   },
-  "postCreateCommand": "pip install -r back-end/requirements.txt && python -c \"import sys; sys.path.insert(0, 'back-end'); import db; db.init_db('back-end/navigator.db')\"",
-  "forwardPorts": [5050, 5500]
+  // Host-mode deps for the editor (imports, pytest), then .env + image build
+  "postCreateCommand": "pip install -r back-end/requirements.txt && task setup",
+  "postAttachCommand": "echo 'Start the app with: task up   (then: task verify)'",
+  // In Codespaces the ports stay private: the page calls /api/* on its own
+  // address and nginx forwards it, so no port needs to be public.
+  "forwardPorts": [5500, 8080, 5050],
+  "portsAttributes": {
+    "5500": { "label": "App (open this)", "onAutoForward": "openBrowser" },
+    "8080": { "label": "Edge, like AWS", "onAutoForward": "silent" },
+    "5050": { "label": "API", "onAutoForward": "silent" }
+  }
 }

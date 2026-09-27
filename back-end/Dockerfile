@@ -30,5 +30,6 @@ USER appuser
 
 EXPOSE 5000
 
-# Create the DB (idempotent) then serve with gunicorn.
-CMD ["sh", "-c", "python -c 'import db; db.init_db()' && gunicorn --bind 0.0.0.0:5000 'app:app'"]
+# Create the DB (idempotent) then serve with gunicorn. exec makes gunicorn the
+# main process, so a stop signal reaches it and it shuts down cleanly at once.
+CMD ["sh", "-c", "python -c 'import db; db.init_db()' && exec gunicorn --bind 0.0.0.0:5000 'app:app'"]

@@ -1,5 +1,5 @@
-# BACKEND tasks — the Flask JSON API (Python). Talks to the database.
-# Invoked as `task api:<name>` from the repo root.
+# BACKEND tasks, HOST MODE (no Docker) — the Flask JSON API in a local venv.
+# Invoked as `task api:<name>` from the repo root. Docker-first: see `task up` / `task test`.
 version: "3"
 
 vars:
@@ -12,32 +12,38 @@ vars:
   PYTHON: '{{.PYTHON | default "python3.13"}}'
 
 tasks:
+  setup:
+    desc: "Host mode one-time setup — venv + backend deps + create back-end/navigator.db"
+    cmds:
+      - task: install
+      - task: :db:init
+
   install:
     desc: "Create the Python venv ({{.PYTHON}}) and install backend dependencies"
     cmd: cd {{.ROOT_DIR}}/back-end && {{.PYTHON}} -m venv .venv && .venv/bin/pip install -q --upgrade pip && .venv/bin/pip install -q -r requirements.txt
 
   dev:
-    desc: "Run the backend — Flask API on :{{.API_PORT}} (needs the DB: see `task db:init`)"
+    desc: "Host mode: Flask dev server on :{{.API_PORT}} (makes the venv and DB on first run)"
     cmd: API_PORT={{.API_PORT}} WEB_PORT={{.WEB_PORT}} {{.ROOT_DIR}}/scripts/run-api.sh
 
   test:
-    desc: "Test the backend (pytest)"
+    desc: "Host mode: backend tests (pytest in the venv)"
     cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/pytest
 
   lint:
-    desc: "Lint the backend (ruff check)"
+    desc: "Host mode: lint (ruff check; reports the submitted code's style issues)"
     cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/ruff check .
 
   format:
-    desc: "Format the backend (ruff format)"
+    desc: "Host mode: ruff format (rewrites files — the submitted code is kept unformatted)"
     cmd: cd {{.ROOT_DIR}}/back-end && {{.VENV}}/ruff format .
 
   smoke:
-    desc: "Smoke-test the running API over HTTP ({{.API_BASE}})"
+    desc: "Smoke-test a running API over HTTP ({{.API_BASE}})"
     cmd: API_BASE={{.API_BASE}} {{.ROOT_DIR}}/scripts/smoke.sh
 
   check:
-    desc: "Local quality gate — lint + tests (run before committing)"
+    desc: "Host mode: lint + tests"
     cmds:
       - task: lint
       - task: test
