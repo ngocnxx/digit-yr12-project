@@ -161,9 +161,12 @@ task down                            # stop (data kept)
 - **Edge :8080:** the same nginx, shaped like CloudFront: one origin, `/api/*` forwarded, 403 for a
   missing file, and the production CSP (script hash computed from `index.html` at build). Use it to
   prove the app runs under the production headers before deploying.
-- **Devcontainer / Codespaces:** Python 3.13 + Docker-in-Docker + Task. `postCreateCommand` runs
-  `task setup`; then `task up` / `task verify` exactly as on the Mac. In Codespaces the page calls
-  `/api/*` on its own address (nginx forwards it), so the forwarded ports stay private.
+- **Devcontainer / Codespaces:** `docker-compose.yml` + a `dev` service
+  (`.devcontainer/docker-compose.devcontainer.yml`) with the Docker CLI and Task, talking to the
+  host's Docker engine — no second engine, so it is the same project, containers and database as
+  bare metal. Use one or the other at a time. Inside `dev`, the smoke scripts reach the services
+  by name (`web:5500`, `api:5000`). In Codespaces the page calls `/api/*` on its own address
+  (nginx forwards it), so only the web ports are forwarded and they stay private.
 
 ---
 

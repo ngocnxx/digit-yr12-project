@@ -29,8 +29,9 @@ the topic is due tomorrow → reload (still signed in) → log out, with a clean
 
 ## 3. GitHub Codespaces
 
-1. Code → Codespaces → Create codespace. The devcontainer installs Docker and Task, then runs `task setup`.
-2. In the terminal: `task up` (then `task verify`).
+1. Code → Codespaces → Create codespace. The devcontainer is this repo's `docker-compose.yml` plus a
+   `dev` service to work in; it starts the app and runs `task setup`.
+2. In the terminal: `task verify` (or `task up` after a `task down`).
 3. Open the forwarded port **5500** (Ports tab). The ports stay private: the page calls `/api/*` on
    its own address and nginx forwards it to the API, so no port has to be made public.
 
@@ -43,6 +44,13 @@ task api:test   # pytest in the venv
 ```
 
 In Codespaces host mode, open the forwarded **5050** address instead: Flask serves the page itself.
+
+## 5. Devcontainer on a Mac (VS Code "Reopen in Container")
+
+Same `docker-compose.yml`, same Docker engine, same database as bare metal: the `dev` container
+drives Docker Desktop through its socket. Use bare metal **or** the devcontainer, one at a time —
+close the devcontainer ("Reopen Folder Locally") before running `task up` on the Mac, because
+VS Code's port forwarding takes over `127.0.0.1:5500` while it is open.
 
 `task --list` shows every task. More detail: `docs/nrn-architecture.html` (Running locally) and
 `docs/dev-and-test.md`.

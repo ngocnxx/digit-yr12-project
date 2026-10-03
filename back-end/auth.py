@@ -84,9 +84,9 @@ def require_auth(view):
             g.user_id = decode_token(token)
         except jwt.PyJWTError:
             # Covers expired, malformed, and bad-signature tokens alike.
-            print(f"[trace] require_auth: {where} → 401 (bad/expired token)")
+            print(f"[trace] require_auth: {where} ->401 (bad/expired token)")
             return jsonify(error="Your session has expired. Please log in again."), 401
-        print(f"[trace] require_auth: {where} → OK as user {g.user_id}")
+        print(f"[trace] require_auth: {where} -> OK as user {g.user_id}")
         return view(*args, **kwargs)
 
     return wrapper

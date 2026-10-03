@@ -41,6 +41,8 @@ COPY index.html /usr/share/nginx/html/
 COPY style.css /usr/share/nginx/html/
 COPY js/ /usr/share/nginx/html/js/
 
-# 80 = the page for split-origin dev (API on :5050)
+# Same numbers inside and out, so web:5500 (devcontainer), 127.0.0.1:5500 (Mac)
+# and the Codespaces -5500 address all match.
+# 5500 = the page for split-origin dev (API on :5050)
 # 8080 = the "edge": one origin like CloudFront (/api/* forwarded, production CSP)
-EXPOSE 80 8080
+EXPOSE 5500 8080

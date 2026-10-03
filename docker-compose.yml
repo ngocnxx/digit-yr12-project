@@ -2,6 +2,7 @@
 #   task up        build + start, wait until healthy, print the addresses
 #   task verify    the Definition of Done gate (tests, image, smoke, S3 mode)
 # Or plain compose:  docker compose up --build
+# The devcontainer (.devcontainer/) runs this same file plus a `dev` service.
 #   web  -> http://127.0.0.1:5500   the page; API calls go to :5050 (split origin, CORS)
 #   edge -> http://127.0.0.1:8080   one origin like CloudFront: /api/* forwarded, production CSP
 #   api  -> http://127.0.0.1:5050   the Flask JSON API (gunicorn)
@@ -15,6 +16,9 @@
 # still listens on 5000 internally; only the published host port moved. Override
 # either side via a root .env, e.g. `echo "API_PORT=5000" >> .env` (then point
 # front-end/js/config.js API_BASE at the matching port).
+
+# One project name for bare-metal and the devcontainer (same containers + database)
+name: digit-yr12-project
 
 x-logging: &logging
   driver: json-file
@@ -60,7 +64,7 @@ services:
   web:
     build: ./front-end
     ports:
-      - "${WEB_PORT:-5500}:80"
+      - "${WEB_PORT:-5500}:5500"
       - "${EDGE_PORT:-8080}:8080"
     depends_on:
       api:
@@ -68,7 +72,7 @@ services:
     restart: unless-stopped
     logging: *logging
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5500/"]
       interval: 10s
       timeout: 5s
       retries: 3

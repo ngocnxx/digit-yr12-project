@@ -16,6 +16,9 @@ env:
   API_PORT: "{{.API_PORT}}"
   WEB_PORT: "{{.WEB_PORT}}"
   EDGE_PORT: "{{.EDGE_PORT}}"
+  # The devcontainer's `dev` service belongs to this project but not to
+  # docker-compose.yml; don't warn about it (and never remove it).
+  COMPOSE_IGNORE_ORPHANS: "true"
 
 tasks:
   setup:
@@ -29,7 +32,7 @@ tasks:
   wait-docker:
     internal: true
     silent: true
-    # Docker-in-Docker (devcontainer, Codespaces) can take a few seconds to start
+    # Docker Desktop (or the socket in a fresh devcontainer) can take a few seconds
     cmd: |
       for i in $(seq 1 60); do
         docker info >/dev/null 2>&1 && break
@@ -85,7 +88,7 @@ tasks:
         domain="${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
         web="https://${CODESPACE_NAME}-{{.WEB_PORT}}.${domain}"
         edge="https://${CODESPACE_NAME}-{{.EDGE_PORT}}.${domain}"
-        api="https://${CODESPACE_NAME}-{{.API_PORT}}.${domain}"
+        api="$web"   # the API port is not forwarded; nginx passes /api/* on
       else
         web="http://127.0.0.1:{{.WEB_PORT}}"
         edge="http://127.0.0.1:{{.EDGE_PORT}}"
@@ -127,8 +130,10 @@ tasks:
   smoke:
     desc: "HTTP smoke tests against the running stack — API flow, page, edge, CORS (needs `task up`)"
     dir: "{{.ROOT_DIR}}"
+    # Bare-metal: the published 127.0.0.1 ports. Devcontainer: service names
+    # (WEB_BASE, EDGE_BASE, API_BASE are set by .devcontainer/docker-compose.devcontainer.yml).
     cmds:
-      - API_BASE=http://127.0.0.1:{{.API_PORT}} ./scripts/smoke.sh
+      - API_BASE="${API_BASE:-http://127.0.0.1:{{.API_PORT}}}" ./scripts/smoke.sh
       - ./scripts/smoke-web.sh
 
   smoke:s3:
@@ -161,10 +166,12 @@ tasks:
     desc: "Advisory lint (ruff check, read-only, in a container) — not part of the gate, the submitted code stays as-is"
     dir: "{{.ROOT_DIR}}"
     ignore_error: true
-    cmd: docker run --rm -v "{{.ROOT_DIR}}/back-end:/src" -w /src {{.RUFF_IMAGE}} check --no-cache .
+    # In the devcontainer the Docker engine is the host's, so mount the host path
+    cmd: docker run --rm -v "${LOCAL_WORKSPACE_FOLDER:-{{.ROOT_DIR}}}/back-end:/src" -w /src {{.RUFF_IMAGE}} check --no-cache .
 
   reset:
     desc: "Delete the Docker database (every account and review) and stop the stack"
     dir: "{{.ROOT_DIR}}"
     prompt: "This deletes every account and review in the Docker database volume. Continue?"
-    cmd: docker compose --profile s3 down --volumes --remove-orphans
+    # No --remove-orphans: that would also delete the devcontainer you may be in
+    cmd: docker compose --profile s3 down --volumes
