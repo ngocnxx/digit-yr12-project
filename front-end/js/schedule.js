@@ -32,7 +32,15 @@ export function statusOf(topic, today = todayISO()) {
 export function statusBadge(topic) {
   const st = statusOf(topic);
   if (st.status === 'new') return { cls: 'is-new', label: 'NEW' };
-  if (st.status === 'overdue') return { cls: 'is-overdue', label: `${st.days}d overdue` };
+  if (st.status === 'overdue') {
+    // Gentler than "Xd overdue": it reads as a suggestion, not a verdict,
+    // which is what the overdue redesign in the report (Stage 7) was about.
+    // Only the day count is bolded, so the eye lands on the date, not the
+    // whole phrase. The colour is a neutral cyan in style.css. This is a
+    // display label only; the overdue status itself is decided in statusOf().
+    const when = st.days === 1 ? '1 day' : `${st.days} days`;
+    return { cls: 'is-overdue', label: `You should review this <strong>${when}</strong> ago` };
+  }
   if (st.status === 'due') return { cls: 'is-due', label: 'due today' };
   return { cls: 'is-ok', label: `due in ${st.days}d` };
 }

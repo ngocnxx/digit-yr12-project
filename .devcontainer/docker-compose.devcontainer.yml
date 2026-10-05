@@ -1,0 +1,32 @@
+# Devcontainer = the app's own docker-compose.yml plus this one `dev` service.
+# Used by .devcontainer/devcontainer.json (VS Code "Reopen in Container", Codespaces).
+#
+# There is ONE Docker engine: the dev container drives the host's Docker (your Mac's
+# Docker Desktop, or the Codespace's) through its socket. So bare-metal `task up`
+# and the devcontainer run the same project, the same containers and the same
+# database volume. Use one or the other at a time.
+#
+# Relative paths resolve from the project directory (the repo root, where
+# docker-compose.yml lives), so "." is the repo.
+services:
+  dev:
+    image: mcr.microsoft.com/devcontainers/python:3.13
+    command: sleep infinity
+    volumes:
+      - .:/workspaces/digit-yr12-project:cached
+    # Use the real Docker socket, not the feature's socat proxy at
+    # /var/run/docker.sock: through that proxy, output from any container that
+    # runs longer than about 0.5 s is silently dropped (exit code still 0). The
+    # proxy is used when the socket belongs to root (Docker Desktop); group 0
+    # gives this container's user direct access. In Codespaces the socket has a
+    # docker group instead, and the feature already grants that.
+    group_add: ["0"]
+    environment:
+      DOCKER_HOST: unix:///var/run/docker-host.sock
+      # Inside the compose network the services are reached by name, not via the
+      # host's 127.0.0.1 ports. The smoke scripts read these.
+      WEB_BASE: http://web:5500
+      EDGE_BASE: http://web:8080
+      API_BASE: http://api:5000
+      API_A: http://api-s3a:5000
+      API_B: http://api-s3b:5000

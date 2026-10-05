@@ -1,15 +1,24 @@
 {
   "name": "NCEA Review Navigator",
-  // Python 3.13 dev shell with its own Docker engine (Docker-in-Docker) and Task,
-  // so the full stack runs here exactly as on a Mac:  task up  ·  task verify
-  // Works the same in VS Code "Reopen in Container" and in GitHub Codespaces.
-  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  // The app's docker-compose.yml plus a `dev` service to work in. One Docker
+  // engine: the host's (Docker Desktop on a Mac, the Codespace's own in
+  // Codespaces), shared with bare-metal `task up`. Same project, containers and
+  // database either way; use bare-metal or the devcontainer, one at a time.
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.devcontainer.yml"],
+  "service": "dev",
+  "runServices": ["dev", "api", "web"],
+  "workspaceFolder": "/workspaces/digit-yr12-project",
+  // Leaving the devcontainer stops the stack; bare-metal `task up` starts it again
+  "shutdownAction": "stopCompose",
   "features": {
-    // moby: false = Docker CE packages. The python:3.13 image is Debian trixie,
-    // which has no moby packages, so the default install fails there.
-    "ghcr.io/devcontainers/features/docker-in-docker:2": { "moby": false },
+    // Docker CLI + compose talking to the host's engine (no engine of its own).
+    // moby: false = Docker CE packages; the python:3.13 image is Debian trixie,
+    // which has no moby packages.
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": { "moby": false },
     "ghcr.io/devcontainers-extra/features/go-task:1": {}
   },
+  // Host path of the repo, for `docker run -v` from inside (task lint)
+  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}" },
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "charliermarsh.ruff"],
@@ -23,13 +32,13 @@
   },
   // Host-mode deps for the editor (imports, pytest), then .env + image build
   "postCreateCommand": "pip install -r back-end/requirements.txt && task setup",
-  "postAttachCommand": "echo 'Start the app with: task up   (then: task verify)'",
-  // In Codespaces the ports stay private: the page calls /api/* on its own
-  // address and nginx forwards it, so no port needs to be public.
-  "forwardPorts": [5500, 8080, 5050],
+  "postAttachCommand": "task urls",
+  // Codespaces: the page calls /api/* on its own address and nginx forwards it,
+  // so only the web ports are forwarded, and they stay private. (On a Mac,
+  // Docker Desktop already publishes 5500, 8080 and 5050 on 127.0.0.1.)
+  "forwardPorts": ["web:5500", "web:8080"],
   "portsAttributes": {
-    "5500": { "label": "App (open this)", "onAutoForward": "openBrowser" },
-    "8080": { "label": "Edge, like AWS", "onAutoForward": "silent" },
-    "5050": { "label": "API", "onAutoForward": "silent" }
+    "web:5500": { "label": "App (open this)", "onAutoForward": "openBrowser" },
+    "web:8080": { "label": "Edge, like AWS", "onAutoForward": "silent" }
   }
 }
