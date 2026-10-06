@@ -19,6 +19,14 @@ env:
   # The devcontainer's `dev` service belongs to this project but not to
   # docker-compose.yml; don't warn about it (and never remove it).
   COMPOSE_IGNORE_ORPHANS: "true"
+  # Build with Compose's own builder, not by delegating to `buildx bake`.
+  # Bake writes a metadata file to /tmp and reads it back; in a Codespace the
+  # dev container drives Docker through a socket (docker-outside-of-docker) and
+  # that handoff fails with "open /tmp/.tmp-compose-build-metadataFile-...:
+  # permission denied" — the build succeeds, then compose can't read the result.
+  # The non-bake path tracks the built images itself, so `task up`/`setup`/
+  # `dev`/`test`/`verify` build cleanly everywhere. (No effect on the running app.)
+  COMPOSE_BAKE: "false"
 
 tasks:
   setup:
