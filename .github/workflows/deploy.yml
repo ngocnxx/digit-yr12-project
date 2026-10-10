@@ -1,0 +1,132 @@
+# deploy: a pull request plans dev; a push to develop builds the image once, applies dev, then production after approval.
+# AWS is reached only through GitHub's OIDC sign-in. Every account value is a repository variable (docs/deploy.md).
+name: deploy
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: read
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+env:
+  TF_IN_AUTOMATION: "1"
+  TF_INPUT: "0"
+  TF_VAR_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+  TF_VAR_region: ${{ vars.AWS_REGION }}
+  TF_VAR_alarm_topic_arn: ${{ vars.ALARM_TOPIC_ARN }}
+  TERRAFORM_DIR: infra/app
+jobs:
+  plan:
+    # A pull request builds no image. It plans with the digest already deployed (read from dev's state; a placeholder
+    # before the first deploy), so the plan shows only the change to the settings and infrastructure.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04-arm
+    env:
+      TF_VAR_permissions_boundary_arn: ${{ vars.BOUNDARY_ARN_DEV }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with: { terraform_version: "1.16.3", terraform_wrapper: false }
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with: { role-to-assume: "${{ vars.PLAN_PR_ROLE_ARN }}", aws-region: "${{ vars.AWS_REGION }}" }
+      - run: |
+          set -euo pipefail
+          cd "$TERRAFORM_DIR"
+          terraform init -backend-config="bucket=${{ vars.STATE_BUCKET }}" -backend-config="key=digit-yr12/dev/terraform.tfstate" -backend-config="region=${{ vars.AWS_REGION }}"
+          image=$(terraform show -json | jq -r '[.. | objects | select(.type? == "aws_lambda_function") | .values.image_uri] | first // empty')
+          terraform plan -lock=false -var-file=dev.tfvars.json -var "image_uri=${image:-${{ vars.ECR_REPOSITORY }}@sha256:$(printf '0%.0s' $(seq 64))}"
+  image:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04-arm
+    environment: dev
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with: { role-to-assume: "${{ vars.APPLY_ROLE_ARN_DEV }}", aws-region: "${{ vars.AWS_REGION }}" }
+      - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      - id: push
+        run: |
+          set -euo pipefail
+          docker build -t "${{ vars.ECR_REPOSITORY }}:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}" back-end
+          docker push "${{ vars.ECR_REPOSITORY }}:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "digest=$(docker inspect --format '{{index .RepoDigests 0}}' "${{ vars.ECR_REPOSITORY }}:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}")" >> "$GITHUB_OUTPUT"
+  dev:
+    needs: image
+    runs-on: ubuntu-24.04-arm
+    environment: dev
+    env:
+      ENV_NAME: dev
+      TF_VAR_permissions_boundary_arn: ${{ vars.BOUNDARY_ARN_DEV }}
+      TF_VAR_image_uri: ${{ needs.image.outputs.digest }}
+      ROLE: ${{ vars.APPLY_ROLE_ARN_DEV }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with: { terraform_version: "1.16.3", terraform_wrapper: false }
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with: { role-to-assume: "${{ env.ROLE }}", aws-region: "${{ vars.AWS_REGION }}" }
+      - run: |
+          set -euo pipefail
+          cd "$TERRAFORM_DIR"
+          terraform init -backend-config="bucket=${{ vars.STATE_BUCKET }}" -backend-config="key=digit-yr12/$ENV_NAME/terraform.tfstate" -backend-config="region=${{ vars.AWS_REGION }}"
+          terraform plan -out=tfplan -var-file="$ENV_NAME.tfvars.json"
+          # A delete or replace needs the label allow-destroy on the merged pull request.
+          if [ "$(terraform show -json tfplan | jq '[.resource_changes[] | select(.change.actions | index("delete"))] | length')" != 0 ] \
+            && ! gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[].labels[].name' | grep -qx allow-destroy; then
+            echo "The plan deletes something and the pull request has no allow-destroy label." >&2; exit 1
+          fi
+          terraform apply tfplan
+          # Publish the site: upload front-end/ (not the container files), then clear the CDN cache.
+          aws s3 sync ../../front-end "s3://$(terraform output -raw site_bucket)" --delete --cache-control no-cache --no-progress \
+            --exclude _nocache_server.py --exclude Dockerfile --exclude nginx.conf --exclude '.*'
+          aws cloudfront create-invalidation --distribution-id "$(terraform output -raw site_distribution_id)" --paths '/*' > /dev/null
+          SITE_URL=$(terraform output -raw site_url)
+          curl -fsS -o /dev/null "$SITE_URL/"
+          API_BASE=$SITE_URL bash ../../scripts/smoke.sh
+  production:
+    needs: [image, dev]
+    runs-on: ubuntu-24.04-arm
+    environment: production
+    env:
+      ENV_NAME: production
+      TF_VAR_permissions_boundary_arn: ${{ vars.BOUNDARY_ARN_PRODUCTION }}
+      TF_VAR_image_uri: ${{ needs.image.outputs.digest }}
+      ROLE: ${{ vars.APPLY_ROLE_ARN_PRODUCTION }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with: { terraform_version: "1.16.3", terraform_wrapper: false }
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with: { role-to-assume: "${{ env.ROLE }}", aws-region: "${{ vars.AWS_REGION }}" }
+      - run: |
+          set -euo pipefail
+          cd "$TERRAFORM_DIR"
+          terraform init -backend-config="bucket=${{ vars.STATE_BUCKET }}" -backend-config="key=digit-yr12/$ENV_NAME/terraform.tfstate" -backend-config="region=${{ vars.AWS_REGION }}"
+          terraform plan -out=tfplan -var-file="$ENV_NAME.tfvars.json"
+          # A delete or replace needs the label allow-destroy on the merged pull request.
+          if [ "$(terraform show -json tfplan | jq '[.resource_changes[] | select(.change.actions | index("delete"))] | length')" != 0 ] \
+            && ! gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[].labels[].name' | grep -qx allow-destroy; then
+            echo "The plan deletes something and the pull request has no allow-destroy label." >&2; exit 1
+          fi
+          terraform apply tfplan
+          # Publish the site: upload front-end/ (not the container files), then clear the CDN cache.
+          aws s3 sync ../../front-end "s3://$(terraform output -raw site_bucket)" --delete --cache-control no-cache --no-progress \
+            --exclude _nocache_server.py --exclude Dockerfile --exclude nginx.conf --exclude '.*'
+          aws cloudfront create-invalidation --distribution-id "$(terraform output -raw site_distribution_id)" --paths '/*' > /dev/null
+          SITE_URL=$(terraform output -raw site_url)
+          curl -fsS -o /dev/null "$SITE_URL/"
+          curl -fsS -o /dev/null "$SITE_URL/api/health"  # production: read-only checks, no test sign-up in real data
