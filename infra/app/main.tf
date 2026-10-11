@@ -64,7 +64,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "git::https://github.com/nnthanh101/terraform-aws-serverless.git//modules/serverless-web-app?ref=c50e23437ce1b28f7db637f5bb6e7b6e9e760b36"
+  source = "git::https://github.com/nnthanh101/terraform-aws-serverless.git//modules/serverless-web-app?ref=928bc4555fdc688822a98938fb37b4ef8db9df1a" # v0.4.0
 
   account_id               = var.account_id
   region                   = var.region
@@ -78,6 +78,8 @@ module "app" {
   memory_mb            = var.memory_mb
   secret_store         = "environment"
   reserved_concurrency = null
+  files_kms_key        = false  # S3-managed encryption: no customer-managed key to pay for
+  files_bucket_label   = "data" # the bucket holds the databases (db/) and photos (photos/)
   site_source_dir      = "${path.module}/../../front-end"
 
   # The module adds S3DB_BUCKET and CORS_ORIGIN (the site's own address) and generates SECRET_KEY.
