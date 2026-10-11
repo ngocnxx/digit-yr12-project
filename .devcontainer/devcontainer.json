@@ -18,7 +18,7 @@
     "ghcr.io/devcontainers-extra/features/go-task:1": {}
   },
   // Host path of the repo, for `docker run -v` from inside (task lint)
-  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}" },
+  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}", "TMPDIR": "/home/vscode/.tmp" },
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python", "charliermarsh.ruff"],
@@ -31,7 +31,7 @@
     }
   },
   // Host-mode deps for the editor (imports, pytest), then .env + image build
-  "postCreateCommand": "pip install -r back-end/requirements.txt && task setup",
+  "postCreateCommand": "mkdir -p /home/vscode/.tmp && pip install -r back-end/requirements.txt && task setup",
   "postAttachCommand": "task urls",
   // Codespaces: the page calls /api/* on its own address and nginx forwards it,
   // so only the web ports are forwarded, and they stay private. (On a Mac,
