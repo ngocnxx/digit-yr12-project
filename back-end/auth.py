@@ -1,7 +1,7 @@
 """Authentication: password hashing, JWT, and the @require_auth guard.
 
 Two security  this module have:
-  1. Passwords are only ever stored/compared as werkzeug hashes — plaintext is
+  1. Passwords are only ever stored/compared as werkzeug hashes- plaintext is
      never persisted, logged, or returned.
   2. Sessions are stateless: a signed JWT carried as `Authorization: Bearer <token>`
      is the only proof of identity. There is no server-side session store.
@@ -59,7 +59,7 @@ def _bearer_token() -> str | None:
     return None
 
 
-#guard 
+#guard the system
 
 
 def require_auth(view):

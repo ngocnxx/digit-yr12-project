@@ -1,4 +1,4 @@
-"""Flask application factory - the JSON API, and the front-end files too,
+"""Flask application factory- the JSON API, and the front-end files too,
 so the whole app can run from one address.
 """
 
@@ -23,7 +23,7 @@ from routes.subjects import bp as subjects_bp
 from routes.topics import bp as topics_bp
 from routes.user import bp as user_bp
 
-# Full paths, so it works no matter which folder the server is started from
+## Full paths, so it works no matter which folder the server is started from
 HERE = Path(__file__).resolve().parent
 FRONT_END = HERE.parent / "front-end"
 
